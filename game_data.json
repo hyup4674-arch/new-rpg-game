@@ -11,6 +11,17 @@
     "inn_cost": 50,
     "hire_cost": 100
   },
+  "class_equipment_rules": {
+    "전사": {
+      "allowed_categories": ["weapons", "armors", "shields"]
+    },
+    "암살자": {
+      "allowed_categories": ["daggers", "armors"]
+    },
+    "마법사": {
+      "allowed_categories": ["spells", "armors"]
+    }
+  },
   "weapons": {
     "루키 숏소드": {
       "attack": 1
