@@ -24,7 +24,7 @@ game_data = load_game_data()
 
 # 설정값 단축 참조
 SETTINGS = game_data.get("settings", {
-    "combat_delay": 5,
+    "combat_delay": 3,
     "min_damage": 1,
     "random_variance_min": -2,
     "random_variance_max": 2,
