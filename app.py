@@ -81,14 +81,14 @@ if "initialized" not in st.session_state:
         st.session_state.max_mp = 50
         st.session_state.gold = 100
         
-        # 동료 시스템 상태 (전투 횟수 제한 제거, 사망 시 소멸)
+        # 동료 시스템 상태
         st.session_state.companion = None 
         
         # 전투 상태
         st.session_state.in_combat = False
         st.session_state.combat_monster = None
         st.session_state.combat_turn = "player"
-        st.session_state.last_combat_msg = "⚔️ 사냥터에서 사냥을 시작하면 실시간 전투 계산 결과가 여기에 표시됩니다."
+        st.session_state.last_combat_msg = "<span style='color: #31333F;'>⚔️ 사냥터에서 사냥을 시작하면 실시간 전투 결과가 여기에 표시됩니다.</span>"
         st.session_state.player_double_damage = False
         
         # 장착 아이템
@@ -96,7 +96,7 @@ if "initialized" not in st.session_state:
         st.session_state.equipped_armor = None
         st.session_state.equipped_shield = None
         
-        # 인벤토리 (소모품 및 보유 아이템)
+        # 인벤토리
         st.session_state.inventory = {"hp_potion": 2, "mp_potion": 2}
         st.session_state.item_inventory = []
         
@@ -113,7 +113,7 @@ else:
     if "combat_turn" not in st.session_state:
         st.session_state.combat_turn = "player"
     if "last_combat_msg" not in st.session_state:
-        st.session_state.last_combat_msg = "⚔️ 전투 대기 중..."
+        st.session_state.last_combat_msg = "<span style='color: #31333F;'>⚔️ 전투 대기 중...</span>"
     if "companion" not in st.session_state:
         st.session_state.companion = None
     if "player_double_damage" not in st.session_state:
@@ -177,11 +177,10 @@ def get_item_stat_text(item_name, item_type):
             return f"{item_name} (방어력: {game_data['shields'][item_name]['defense']})"
     return item_name
 
-# 자동 장착 처리 함수 (플레이어 우선 장착 -> 중복 장비 제외 -> 동료 순서)
+# 자동 장착 처리 함수
 def process_auto_equip():
     inventory_items = list(st.session_state.item_inventory)
     
-    # 1. 플레이어 자동 장착 검사
     c_class = st.session_state.char_class
     for itm in inventory_items:
         is_weapon = itm in game_data.get("weapons", {})
@@ -231,7 +230,6 @@ def process_auto_equip():
                     st.session_state.item_inventory.remove(itm)
                 add_log(f"✨ 플레이어가 인벤토리에서 **{itm}**(을)를 자동 장착했습니다.")
 
-    # 2. 동료 자동 장착 검사 (다음 순서)
     comp = st.session_state.companion
     if comp:
         c_type = comp["type"]
@@ -282,7 +280,7 @@ def process_auto_equip():
                     add_log(f"✨ 동료 [{comp['name']}]이(가) 인벤토리에서 **{itm}**(을)를 자동 장착했습니다.")
     save_game_state()
 
-# 아이템 드롭 함수 (드롭율 50%)
+# 아이템 드롭 함수
 def handle_item_drop(m_atk, m_def):
     if random.random() >= 0.50:
         return 
@@ -461,7 +459,6 @@ else:
     # ----------------- 게임 메인 화면 -----------------
     total_atk, total_def, max_hp, max_mp = get_derived_stats()
     
-    # 좌측 사이드바: 캐릭터 및 동료 상태, 장비 및 능력치, 인벤토리/포션
     with st.sidebar:
         st.markdown("---")
         st.title(f"👤 {st.session_state.char_name}")
@@ -481,7 +478,6 @@ else:
         st.text(f"💙 MP: {st.session_state.mp} / {max_mp}")
         st.text(f"💰 소지금: {st.session_state.gold} G")
         
-        # 동료 상태 표시
         if st.session_state.companion:
             comp = st.session_state.companion
             st.markdown("---")
@@ -555,9 +551,8 @@ else:
     # 메인 화면
     st.title("🗺️ 텍스트 RPG 세계관")
     
-    # 전투 중일 때의 화면
     if st.session_state.in_combat:
-        st.subheader("⚔️ 실시간 전투 진행 중 (2초 간격)")
+        st.subheader("⚔️ 실시간 전투 진행 중 (5초 간격)")
         cm = st.session_state.combat_monster
         
         if st.session_state.companion:
@@ -596,9 +591,11 @@ else:
             """, unsafe_allow_html=True)
             
         st.markdown("---")
-        st.markdown("### ⚡ 최근 전투 결과")
+        st.markdown("### ⚡ 최근 전투 결과 (글자 크기 3배 확대)")
+        
+        # 3배 큰 글씨 크기(font-size: 3em) 컨테이너 적용
         st.markdown(f"""
-        <div style="padding: 15px; background-color: #f0f2f6; color: #31333F; border-radius: 10px; border: 2px solid #d6d6d8;">
+        <div style="padding: 25px; background-color: #f0f2f6; border-radius: 12px; border: 2px solid #d6d6d8; font-size: 3em; line-height: 1.2; text-align: center; font-weight: bold;">
             {st.session_state.last_combat_msg}
         </div>
         """, unsafe_allow_html=True)
@@ -626,7 +623,6 @@ else:
             
             dmg_to_m = max(1, base_attack_power - cm['def'] + random.randint(-2, 2))
             
-            # 마법 데미지는 최종 데미지의 절반만 적용
             if is_magic_attack or st.session_state.equipped_weapon in game_data.get("spells", {}):
                 dmg_to_m = max(1, int(dmg_to_m * 0.5))
                 
@@ -634,16 +630,18 @@ else:
             if st.session_state.player_double_damage:
                 dmg_to_m *= 2
                 st.session_state.player_double_damage = False
-                double_msg = " 🔥 [적 중심 상실 효과: 데미지 2배 적용!]"
+                double_msg = " (적 중심 상실: 데미지 2배!)"
                 
             cm['hp'] -= dmg_to_m
-            log_msg = f"⚔️ [플레이어 공격] 적 피해 데미지: {dmg_to_m}{double_msg}"
-            st.session_state.last_combat_msg = log_msg
-            add_log(log_msg)
+            
+            # 플레이어 메시지: 붉은색 (#e74c3c), 지정 양식
+            log_text = f"플레이어가 적을 공격 해서 {dmg_to_m} 의 피해를 입혔습니다{double_msg}"
+            st.session_state.last_combat_msg = f"<span style='color: #e74c3c;'>{log_text}</span>"
+            add_log(log_text)
             
             if cm['hp'] <= 0:
                 win_msg = f"🎉 **{cm['name']}** 처치 성공! (+{cm['atk'] * 5} 골드)"
-                st.session_state.last_combat_msg = win_msg
+                st.session_state.last_combat_msg = f"<span style='color: #27ae60;'>{win_msg}</span>"
                 add_log(win_msg)
                 st.session_state.gold += cm['atk'] * 5
                 st.session_state.in_combat = False
@@ -657,7 +655,7 @@ else:
                 else:
                     st.session_state.combat_turn = "monster"
                 save_game_state()
-                time.sleep(2)
+                time.sleep(5)  # 딜레이 5초
                 st.rerun()
                 
         elif st.session_state.combat_turn == "companion":
@@ -670,6 +668,8 @@ else:
                 c_stats = comp['stats']
                 c_weapon_atk = 0
                 is_c_magic = False
+                c_spell_name = None
+                
                 if comp['equipped_weapon']:
                     w_name = comp['equipped_weapon']
                     if w_name in game_data.get("weapons", {}):
@@ -677,25 +677,39 @@ else:
                     elif w_name in game_data.get("spells", {}):
                         c_weapon_atk = game_data["spells"][w_name]["base_damage"] + c_stats["int"] // 2
                         is_c_magic = True
+                        c_spell_name = w_name
                 
                 c_total_atk = c_stats["str"] + c_weapon_atk
                 if comp['type'] == "마법사" and comp['mp'] >= 5:
                     comp['mp'] -= 5
                     c_total_atk += int(c_stats["int"] * 1.5)
                     is_c_magic = True
+                    if not c_spell_name:
+                        for sp_n in game_data.get("spells", {}):
+                            c_spell_name = sp_n
+                            break
+                        if not c_spell_name:
+                            c_spell_name = "화염구"
                 
                 dmg_to_m = max(1, c_total_atk - cm['def'] + random.randint(-2, 2))
                 if is_c_magic or (comp['equipped_weapon'] in game_data.get("spells", {})):
                     dmg_to_m = max(1, int(dmg_to_m * 0.5))
                     
                 cm['hp'] -= dmg_to_m
-                log_msg = f"⚔️ [동료 공격] {comp['name']}의 공격 | 적 피해 데미지: {dmg_to_m}"
-                st.session_state.last_combat_msg = log_msg
-                add_log(log_msg)
+                
+                # 동료 메시지: 노란색 (#d4ac0d), 지정 양식 분기
+                if is_c_magic or (comp['equipped_weapon'] in game_data.get("spells", {})):
+                    spell_title = c_spell_name if c_spell_name else "마법"
+                    log_text = f"동료가 {spell_title} 마법을 시전하여 {dmg_to_m} 데미지를 입혔습니다."
+                else:
+                    log_text = f"동료가 적을 공격하여 {dmg_to_m} 의 피해를 입혔습니다."
+                    
+                st.session_state.last_combat_msg = f"<span style='color: #d4ac0d;'>{log_text}</span>"
+                add_log(log_text)
                 
                 if cm['hp'] <= 0:
                     win_msg = f"🎉 **{cm['name']}** 처치 성공! (+{cm['atk'] * 5} 골드)"
-                    st.session_state.last_combat_msg = win_msg
+                    st.session_state.last_combat_msg = f"<span style='color: #27ae60;'>{win_msg}</span>"
                     add_log(win_msg)
                     st.session_state.gold += cm['atk'] * 5
                     st.session_state.in_combat = False
@@ -706,7 +720,7 @@ else:
                 else:
                     st.session_state.combat_turn = "monster"
                     save_game_state()
-                    time.sleep(2)
+                    time.sleep(5)  # 딜레이 5초
                     st.rerun()
                 
         elif st.session_state.combat_turn == "monster":
@@ -745,24 +759,26 @@ else:
                     
                 comp['hp'] -= dmg_to_c
                 
+                # 적 메시지: 푸른색 (#2980b9), 지정 양식
+                target_name = comp['name']
                 if c_evaded:
-                    log_msg = f"💨 {comp['name']} 회피 성공"
+                    log_text = f"적이 {target_name} 를 공격했으나 회피했습니다 (0 데미지)"
                 elif c_blocked:
-                    log_msg = f"🛡️ {comp['name']} 블록 성공"
+                    log_text = f"적이 {target_name} 를 공격하여 블록 성공, {dmg_to_c} 의 데미지를 입혔습니다"
                 else:
-                    log_msg = f"💥 [적 공격] {cm['name']}의 공격 ({comp['name']} 피격) 동료 피해 데미지: {dmg_to_c}"
+                    log_text = f"적이 {target_name} 를 공격하여 {dmg_to_c} 의 데미지를 입혔습니다"
                     
-                st.session_state.last_combat_msg = log_msg
-                add_log(log_msg)
+                st.session_state.last_combat_msg = f"<span style='color: #2980b9;'>{log_text}</span>"
+                add_log(log_text)
                 
                 if comp['hp'] <= 0:
-                    death_msg = f"💀 동료 [{comp['name']}]이(가) 전투 중 사망하여 쓰러졌습니다... 착용하고 있던 장비들과 함께 사라집니다."
+                    death_msg = f"💀 동료 [{comp['name']}]이(가) 전투 중 사망하여 쓰러졌습니다... 착용 장비와 함께 소실됩니다."
                     add_log(death_msg)
                     st.session_state.companion = None
                 
                 st.session_state.combat_turn = "player"
                 save_game_state()
-                time.sleep(2)
+                time.sleep(5)  # 딜레이 5초
                 st.rerun()
                 
             else:
@@ -785,24 +801,22 @@ else:
                     
                 st.session_state.hp -= dmg_to_p
                 
+                # 적 메시지: 푸른색 (#2980b9), 지정 양식
                 if p_evaded:
                     st.session_state.player_double_damage = True
-                    big_msg = "<h1 style='color: #00e1ff; text-align: center;'>💨 플레이어 회피성공!</h1><h3 style='text-align: center; color: #ffeb3b;'>적이 중심을 잃었습니다! (다음 플레이어 공격 데미지 2배 ⚡)</h3>"
-                    st.session_state.last_combat_msg = big_msg
-                    add_log("💨 플레이어 회피성공! 적이 중심을 잃었습니다.")
+                    log_text = "적이 플레이어를 공격했으나 회피했습니다 (적 중심 상실! 다음 공격 데미지 2배)"
                 elif p_blocked:
                     st.session_state.player_double_damage = True
-                    big_msg = "<h1 style='color: #ff9800; text-align: center;'>🛡️ 플레이어 블록 성공!</h1><h3 style='text-align: center; color: #ffeb3b;'>적이 중심을 잃었습니다! (다음 플레이어 공격 데미지 2배 ⚡)</h3>"
-                    st.session_state.last_combat_msg = big_msg
-                    add_log("🛡️ 플레이어 블록 성공! 적이 중심을 잃었습니다.")
+                    log_text = f"적이 플레이어를 공격하여 블록 성공, {dmg_to_p} 의 데미지를 입었습니다 (적 중심 상실!)"
                 else:
-                    log_msg = f"💥 [적 공격] {cm['name']}의 공격 내 피해 데미지: {dmg_to_p}"
-                    st.session_state.last_combat_msg = f"<div style='font-size: 18px; font-weight: bold;'>{log_msg}</div>"
-                    add_log(log_msg)
+                    log_text = f"적이 플레이어를 공격하여 {dmg_to_p} 의 데미지를 입혔습니다"
+                    
+                st.session_state.last_combat_msg = f"<span style='color: #2980b9;'>{log_text}</span>"
+                add_log(log_text)
                     
                 if st.session_state.hp <= 0:
-                    lose_msg = "💀 전투에서 패배하여 사망했습니다... 마을로 부활합니다. (착용 중인 모든 장비 소실!)"
-                    st.session_state.last_combat_msg = lose_msg
+                    lose_msg = "💀 전투에서 패배하여 사망했습니다... 마을로 부활합니다. (장비 소실!)"
+                    st.session_state.last_combat_msg = f"<span style='color: #e74c3c;'>{lose_msg}</span>"
                     add_log(lose_msg)
                     st.session_state.hp = max_hp
                     st.session_state.mp = max_mp
@@ -816,11 +830,10 @@ else:
                 else:
                     st.session_state.combat_turn = "player"
                     save_game_state()
-                    time.sleep(2)
+                    time.sleep(5)  # 딜레이 5초
                     st.rerun()
 
     else:
-        # 평상시 화면 (사냥터, 상점, 여관)
         tab1, tab2, tab3 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관"])
         
         with tab1:
@@ -855,8 +868,8 @@ else:
                             }
                             st.session_state.combat_turn = "player"
                             st.session_state.in_combat = True
-                            start_msg = f"야생의 **{m_name}** (공격력:{m_data['attack']}, 방어력:{m_data['defense']}, HP:{m_data['hp']}) 출현!"
-                            st.session_state.last_combat_msg = start_msg
+                            start_msg = f"야생의 **{m_name}** 출현!"
+                            st.session_state.last_combat_msg = f"<span style='color: #31333F;'>{start_msg}</span>"
                             add_log(start_msg)
                             save_game_state()
                             st.rerun()
@@ -950,7 +963,7 @@ else:
                     }
                     
                     process_auto_equip()
-                    add_log(f"🤝 든든한 동료 [{c_name}](을)를 기본 상태로 고용했습니다! (사망할 때까지 함께합니다)")
+                    add_log(f"🤝 든든한 동료 [{c_name}](을)를 고용했습니다!")
                     save_game_state()
                     st.rerun()
 
