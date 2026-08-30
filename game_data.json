@@ -24,400 +24,500 @@
   },
   "weapons": {
     "루키 숏소드": {
-      "attack": 1
+      "attack": 1,
+      "price": 25
     },
     "철제 세이버": {
-      "attack": 2
+      "attack": 2,
+      "price": 55
     },
     "브로드 소드": {
-      "attack": 3
+      "attack": 3,
+      "price": 85
     },
     "팔시온": {
-      "attack": 4
+      "attack": 4,
+      "price": 115
     },
     "레이피어": {
-      "attack": 5
+      "attack": 5,
+      "price": 145
     },
     "스틸 메이스": {
-      "attack": 6
+      "attack": 6,
+      "price": 175
     },
     "워 해머": {
-      "attack": 7
+      "attack": 7,
+      "price": 205
     },
     "배틀 액스": {
-      "attack": 8
+      "attack": 8,
+      "price": 235
     },
     "기사의 검": {
-      "attack": 9
+      "attack": 9,
+      "price": 265
     },
     "베테랑 블레이드": {
-      "attack": 10
+      "attack": 10,
+      "price": 295
     },
     "룬 세이버": {
-      "attack": 11
+      "attack": 11,
+      "price": 325
     },
     "크리스탈 소드": {
-      "attack": 12
+      "attack": 12,
+      "price": 355
     },
     "플레임 소드": {
-      "attack": 13
+      "attack": 13,
+      "price": 385
     },
     "프로스트 브레이드": {
-      "attack": 14
+      "attack": 14,
+      "price": 415
     },
     "미스릴 숏소드": {
-      "attack": 15
+      "attack": 15,
+      "price": 445
     },
     "티타늄 블레이드": {
-      "attack": 16
+      "attack": 16,
+      "price": 475
     },
     "드래곤 소드": {
-      "attack": 17
+      "attack": 17,
+      "price": 505
     },
     "태양의 검": {
-      "attack": 18
+      "attack": 18,
+      "price": 535
     },
     "전설의 한손검": {
-      "attack": 19
+      "attack": 19,
+      "price": 565
     },
     "신성한 팔시온": {
-      "attack": 20
+      "attack": 20,
+      "price": 595
     },
     "낡은 단검": {
-      "attack": 1
+      "attack": 1,
+      "price": 25
     },
     "나무 뾰족검": {
-      "attack": 2
+      "attack": 2,
+      "price": 55
     },
     "스틸레토": {
-      "attack": 3
+      "attack": 3,
+      "price": 85
     },
     "쿠커리": {
-      "attack": 4
+      "attack": 4,
+      "price": 115
     },
     "커스 대거": {
-      "attack": 5
+      "attack": 5,
+      "price": 145
     },
     "크리스": {
-      "attack": 6
+      "attack": 6,
+      "price": 175
     },
     "카타르": {
-      "attack": 7
+      "attack": 7,
+      "price": 205
     },
     "어쌔신 나이프": {
-      "attack": 8
+      "attack": 8,
+      "price": 235
     },
     "섀도우 단검": {
-      "attack": 9
+      "attack": 9,
+      "price": 265
     },
     "독니 단검": {
-      "attack": 10
+      "attack": 10,
+      "price": 295
     },
     "블러드 스틸레토": {
-      "attack": 11
+      "attack": 11,
+      "price": 325
     },
     "은장 단검": {
-      "attack": 12
+      "attack": 12,
+      "price": 355
     },
     "룬 대거": {
-      "attack": 13
+      "attack": 13,
+      "price": 385
     },
     "팬텀 나이프": {
-      "attack": 14
+      "attack": 14,
+      "price": 415
     },
     "미스릴 대거": {
-      "attack": 15
+      "attack": 15,
+      "price": 445
     },
     "티타늄 단검": {
-      "attack": 16
+      "attack": 16,
+      "price": 475
     },
     "드래곤 이빨": {
-      "attack": 17
+      "attack": 17,
+      "price": 505
     },
     "월광의 단검": {
-      "attack": 18
+      "attack": 18,
+      "price": 535
     },
     "전설의 암살검": {
-      "attack": 19
+      "attack": 19,
+      "price": 565
     },
     "신성한 스틸레토": {
-      "attack": 20
+      "attack": 20,
+      "price": 595
     },
     "그레이트 소드": {
       "attack": 3,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 120
     },
     "배틀 해머": {
       "attack": 6,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 220
     },
     "바바리안 액스": {
       "attack": 9,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 320
     },
     "클레이모어": {
       "attack": 12,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 420
     },
     "기간틱 슬래셔": {
       "attack": 15,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 520
     },
     "파괴자의 대검": {
       "attack": 18,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 620
     },
     "타이탄 마울": {
       "attack": 21,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 720
     },
     "드래곤 투스": {
       "attack": 24,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 820
     },
     "디스트로이어": {
       "attack": 27,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 920
     },
     "세계수 양손검": {
       "attack": 30,
-      "requires_str": 10
+      "requires_str": 10,
+      "price": 1020
     }
   },
   "armors": {
     "누더기 갑옷세트": {
       "defense": 1,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 25
     },
     "천 갑옷세트": {
       "defense": 2,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 50
     },
     "가죽 갑옷세트": {
       "defense": 3,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 75
     },
     "누벼진 갑옷세트": {
       "defense": 4,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 100
     },
     "경 갑옷세트": {
       "defense": 5,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 125
     },
     "동 갑옷세트": {
       "defense": 6,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 150
     },
     "청동 갑옷세트": {
       "defense": 7,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 175
     },
     "철제 갑옷세트": {
       "defense": 8,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 200
     },
     "강철 갑옷세트": {
       "defense": 9,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 225
     },
     "중 갑옷세트": {
       "defense": 10,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 250
     },
     "기사 갑옷세트": {
       "defense": 11,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 275
     },
     "베테랑 갑옷세트": {
       "defense": 12,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 300
     },
     "왕실 갑옷세트": {
       "defense": 13,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 325
     },
     "수호자 갑옷세트": {
       "defense": 14,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 350
     },
     "미스릴 갑옷세트": {
       "defense": 15,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 375
     },
     "티타늄 갑옷세트": {
       "defense": 16,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 400
     },
     "드래곤 갑옷세트": {
       "defense": 17,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 425
     },
     "태양 갑옷세트": {
       "defense": 18,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 450
     },
     "전설의 갑옷세트": {
       "defense": 19,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 475
     },
     "신성한 갑옷세트": {
       "defense": 20,
       "requires_vit": 0,
-      "is_shield": false
+      "is_shield": false,
+      "price": 500
     }
   },
   "shields": {
     "나무 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 30
+      "block_rate": 30,
+      "price": 50
     },
     "가죽 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 31
+      "block_rate": 31,
+      "price": 70
     },
     "동 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 32
+      "block_rate": 32,
+      "price": 90
     },
     "철제 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 33
+      "block_rate": 33,
+      "price": 110
     },
     "강철 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 34
+      "block_rate": 34,
+      "price": 130
     },
     "기사 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 35
+      "block_rate": 35,
+      "price": 150
     },
     "미스릴 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 36
+      "block_rate": 36,
+      "price": 170
     },
     "티타늄 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 37
+      "block_rate": 37,
+      "price": 190
     },
     "드래곤 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 38
+      "block_rate": 38,
+      "price": 210
     },
     "신성한 방패": {
       "requires_vit": 10,
       "is_shield": true,
-      "block_rate": 40
+      "block_rate": 40,
+      "price": 250
     }
   },
   "spells": {
     "작은 불꽃": {
       "mana_cost": 2,
-      "base_damage": 1
+      "base_damage": 1,
+      "price": 25
     },
     "빛의 화살": {
       "mana_cost": 4,
-      "base_damage": 2
+      "base_damage": 2,
+      "price": 60
     },
     "얼음 조각": {
       "mana_cost": 6,
-      "base_damage": 3
+      "base_damage": 3,
+      "price": 95
     },
     "돌 던지기": {
       "mana_cost": 8,
-      "base_damage": 4
+      "base_damage": 4,
+      "price": 130
     },
     "정령의 숨결": {
       "mana_cost": 10,
-      "base_damage": 5
+      "base_damage": 5,
+      "price": 165
     },
     "번개 줄기": {
       "mana_cost": 12,
-      "base_damage": 6
+      "base_damage": 6,
+      "price": 200
     },
     "화염구": {
       "mana_cost": 14,
-      "base_damage": 7
+      "base_damage": 7,
+      "price": 235
     },
     "서리 바람": {
       "mana_cost": 16,
-      "base_damage": 8
+      "base_damage": 8,
+      "price": 270
     },
     "대지 붕괴": {
       "mana_cost": 18,
-      "base_damage": 9
+      "base_damage": 9,
+      "price": 305
     },
     "플라즈마": {
       "mana_cost": 20,
-      "base_damage": 10
+      "base_damage": 10,
+      "price": 340
     },
     "스타 폴": {
       "mana_cost": 22,
-      "base_damage": 11
+      "base_damage": 11,
+      "price": 375
     },
     "지옥 불": {
       "mana_cost": 24,
-      "base_damage": 12
+      "base_damage": 12,
+      "price": 410
     },
     "뇌전": {
       "mana_cost": 26,
-      "base_damage": 13
+      "base_damage": 13,
+      "price": 445
     },
     "블리자드": {
       "mana_cost": 28,
-      "base_damage": 14
+      "base_damage": 14,
+      "price": 480
     },
     "메테오 스웜": {
       "mana_cost": 30,
-      "base_damage": 15
+      "base_damage": 15,
+      "price": 515
     },
     "다크 매터": {
       "mana_cost": 32,
-      "base_damage": 16
+      "base_damage": 16,
+      "price": 550
     },
     "절대 영도": {
       "mana_cost": 34,
-      "base_damage": 17
+      "base_damage": 17,
+      "price": 585
     },
     "초신성 폭발": {
       "mana_cost": 36,
-      "base_damage": 18
+      "base_damage": 18,
+      "price": 620
     },
     "차원 참격": {
       "mana_cost": 38,
-      "base_damage": 19
+      "base_damage": 19,
+      "price": 655
     },
     "세계수의 심판": {
       "mana_cost": 40,
-      "base_damage": 20
+      "base_damage": 20,
+      "price": 690
     }
   },
   "monsters": {
