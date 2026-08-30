@@ -1,0 +1,695 @@
+{
+    "weapons": {
+        "루키 숏소드": {
+            "attack": 1
+        },
+        "철제 세이버": {
+            "attack": 2
+        },
+        "브로드 소드": {
+            "attack": 3
+        },
+        "팔시온": {
+            "attack": 4
+        },
+        "레이피어": {
+            "attack": 5
+        },
+        "스틸 메이스": {
+            "attack": 6
+        },
+        "워 해머": {
+            "attack": 7
+        },
+        "배틀 액스": {
+            "attack": 8
+        },
+        "기사의 검": {
+            "attack": 9
+        },
+        "베테랑 블레이드": {
+            "attack": 10
+        },
+        "룬 세이버": {
+            "attack": 11
+        },
+        "크리스탈 소드": {
+            "attack": 12
+        },
+        "플레임 소드": {
+            "attack": 13
+        },
+        "프로스트 브레이드": {
+            "attack": 14
+        },
+        "미스릴 숏소드": {
+            "attack": 15
+        },
+        "티타늄 블레이드": {
+            "attack": 16
+        },
+        "드래곤 소드": {
+            "attack": 17
+        },
+        "태양의 검": {
+            "attack": 18
+        },
+        "전설의 한손검": {
+            "attack": 19
+        },
+        "신성한 팔시온": {
+            "attack": 20
+        },
+        "낡은 단검": {
+            "attack": 1
+        },
+        "나무 뾰족검": {
+            "attack": 2
+        },
+        "스틸레토": {
+            "attack": 3
+        },
+        "쿠커리": {
+            "attack": 4
+        },
+        "커스 대거": {
+            "attack": 5
+        },
+        "크리스": {
+            "attack": 6
+        },
+        "카타르": {
+            "attack": 7
+        },
+        "어쌔신 나이프": {
+            "attack": 8
+        },
+        "섀도우 단검": {
+            "attack": 9
+        },
+        "독니 단검": {
+            "attack": 10
+        },
+        "블러드 스틸레토": {
+            "attack": 11
+        },
+        "은장 단검": {
+            "attack": 12
+        },
+        "룬 대거": {
+            "attack": 13
+        },
+        "팬텀 나이프": {
+            "attack": 14
+        },
+        "미스릴 대거": {
+            "attack": 15
+        },
+        "티타늄 단검": {
+            "attack": 16
+        },
+        "드래곤 이빨": {
+            "attack": 17
+        },
+        "월광의 단검": {
+            "attack": 18
+        },
+        "전설의 암살검": {
+            "attack": 19
+        },
+        "신성한 스틸레토": {
+            "attack": 20
+        },
+        "그레이트 소드": {
+            "attack": 3
+        },
+        "배틀 해머": {
+            "attack": 6
+        },
+        "바바리안 액스": {
+            "attack": 9
+        },
+        "클레이모어": {
+            "attack": 12
+        },
+        "기간틱 슬래셔": {
+            "attack": 15
+        },
+        "파괴자의 대검": {
+            "attack": 18
+        },
+        "타이탄 마울": {
+            "attack": 21
+        },
+        "드래곤 투스": {
+            "attack": 24
+        },
+        "디스트로이어": {
+            "attack": 27
+        },
+        "세계수 양손검": {
+            "attack": 30
+        }
+    },
+    "armors": {
+        "누더기 갑옷세트": {
+            "defense": 1,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "천 갑옷세트": {
+            "defense": 2,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "가죽 갑옷세트": {
+            "defense": 3,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "누벼진 갑옷세트": {
+            "defense": 4,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "경 갑옷세트": {
+            "defense": 5,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "동 갑옷세트": {
+            "defense": 6,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "청동 갑옷세트": {
+            "defense": 7,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "철제 갑옷세트": {
+            "defense": 8,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "강철 갑옷세트": {
+            "defense": 9,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "중 갑옷세트": {
+            "defense": 10,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "기사 갑옷세트": {
+            "defense": 11,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "베테랑 갑옷세트": {
+            "defense": 12,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "왕실 갑옷세트": {
+            "defense": 13,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "수호자 갑옷세트": {
+            "defense": 14,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "미스릴 갑옷세트": {
+            "defense": 15,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "티타늄 갑옷세트": {
+            "defense": 16,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "드래곤 갑옷세트": {
+            "defense": 17,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "태양 갑옷세트": {
+            "defense": 18,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "전설의 갑옷세트": {
+            "defense": 19,
+            "requires_vit": 0,
+            "is_shield": false
+        },
+        "신성한 갑옷세트": {
+            "defense": 20,
+            "requires_vit": 0,
+            "is_shield": false
+        }
+    },
+    "shields": {
+        "나무 방패": {
+            "defense": 1,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 1
+        },
+        "가죽 방패": {
+            "defense": 2,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 2
+        },
+        "동 방패": {
+            "defense": 3,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 3
+        },
+        "철제 방패": {
+            "defense": 4,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 4
+        },
+        "강철 방패": {
+            "defense": 5,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 5
+        },
+        "기사 방패": {
+            "defense": 6,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 6
+        },
+        "미스릴 방패": {
+            "defense": 7,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 7
+        },
+        "티타늄 방패": {
+            "defense": 8,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 8
+        },
+        "드래곤 방패": {
+            "defense": 9,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 9
+        },
+        "신성한 방패": {
+            "defense": 10,
+            "requires_vit": 12,
+            "is_shield": true,
+            "block_bonus": 10
+        }
+    },
+    "spells": {
+        "작은 불꽃": {
+            "mana_cost": 2,
+            "base_damage": 1
+        },
+        "빛의 화살": {
+            "mana_cost": 4,
+            "base_damage": 2
+        },
+        "얼음 조각": {
+            "mana_cost": 6,
+            "base_damage": 3
+        },
+        "돌 던지기": {
+            "mana_cost": 8,
+            "base_damage": 4
+        },
+        "정령의 숨결": {
+            "mana_cost": 10,
+            "base_damage": 5
+        },
+        "번개 줄기": {
+            "mana_cost": 12,
+            "base_damage": 6
+        },
+        "화염구": {
+            "mana_cost": 14,
+            "base_damage": 7
+        },
+        "서리 바람": {
+            "mana_cost": 16,
+            "base_damage": 8
+        },
+        "대지 붕괴": {
+            "mana_cost": 18,
+            "base_damage": 9
+        },
+        "플라즈마": {
+            "mana_cost": 20,
+            "base_damage": 10
+        },
+        "스타 폴": {
+            "mana_cost": 22,
+            "base_damage": 11
+        },
+        "지옥 불": {
+            "mana_cost": 24,
+            "base_damage": 12
+        },
+        "뇌전": {
+            "mana_cost": 26,
+            "base_damage": 13
+        },
+        "블리자드": {
+            "mana_cost": 28,
+            "base_damage": 14
+        },
+        "메테오 스웜": {
+            "mana_cost": 30,
+            "base_damage": 15
+        },
+        "다크 매터": {
+            "mana_cost": 32,
+            "base_damage": 16
+        },
+        "절대 영도": {
+            "mana_cost": 34,
+            "base_damage": 17
+        },
+        "초신성 폭발": {
+            "mana_cost": 36,
+            "base_damage": 18
+        },
+        "차원 참격": {
+            "mana_cost": 38,
+            "base_damage": 19
+        },
+        "세계수의 심판": {
+            "mana_cost": 40,
+            "base_damage": 20
+        }
+    },
+    "monsters": {
+        "슬라임 (1)": {
+            "attack": 1,
+            "defense": 1,
+            "hp": 40
+        },
+        "새끼 늑대 (2)": {
+            "attack": 2,
+            "defense": 2,
+            "hp": 43
+        },
+        "고블린 (3)": {
+            "attack": 3,
+            "defense": 3,
+            "hp": 46
+        },
+        "코볼트 (4)": {
+            "attack": 4,
+            "defense": 4,
+            "hp": 49
+        },
+        "좀비 (5)": {
+            "attack": 5,
+            "defense": 5,
+            "hp": 53
+        },
+        "스켈레톤 (6)": {
+            "attack": 6,
+            "defense": 6,
+            "hp": 56
+        },
+        "왕지렁이 (7)": {
+            "attack": 7,
+            "defense": 7,
+            "hp": 59
+        },
+        "들쥐 (8)": {
+            "attack": 8,
+            "defense": 8,
+            "hp": 62
+        },
+        "박쥐 (9)": {
+            "attack": 9,
+            "defense": 9,
+            "hp": 66
+        },
+        "도적 (10)": {
+            "attack": 10,
+            "defense": 10,
+            "hp": 69
+        },
+        "오크 (11)": {
+            "attack": 11,
+            "defense": 11,
+            "hp": 72
+        },
+        "하피 (12)": {
+            "attack": 12,
+            "defense": 12,
+            "hp": 75
+        },
+        "트롤 (13)": {
+            "attack": 13,
+            "defense": 13,
+            "hp": 79
+        },
+        "구울 (14)": {
+            "attack": 14,
+            "defense": 14,
+            "hp": 82
+        },
+        "미노타우로스 (15)": {
+            "attack": 15,
+            "defense": 15,
+            "hp": 85
+        },
+        "리저드맨 (16)": {
+            "attack": 16,
+            "defense": 16,
+            "hp": 88
+        },
+        "오거 (17)": {
+            "attack": 17,
+            "defense": 17,
+            "hp": 92
+        },
+        "사이클롭스 (18)": {
+            "attack": 18,
+            "defense": 18,
+            "hp": 95
+        },
+        "와이트 (19)": {
+            "attack": 19,
+            "defense": 19,
+            "hp": 98
+        },
+        "다크 엘프 (20)": {
+            "attack": 20,
+            "defense": 20,
+            "hp": 102
+        },
+        "골렘 (21)": {
+            "attack": 21,
+            "defense": 21,
+            "hp": 105
+        },
+        "그리폰 (22)": {
+            "attack": 22,
+            "defense": 22,
+            "hp": 108
+        },
+        "와이번 (23)": {
+            "attack": 23,
+            "defense": 23,
+            "hp": 111
+        },
+        "키메라 (24)": {
+            "attack": 24,
+            "defense": 24,
+            "hp": 115
+        },
+        "만티코어 (25)": {
+            "attack": 25,
+            "defense": 25,
+            "hp": 118
+        },
+        "데스 나이트 (26)": {
+            "attack": 26,
+            "defense": 26,
+            "hp": 121
+        },
+        "뱀파이어 (27)": {
+            "attack": 27,
+            "defense": 27,
+            "hp": 124
+        },
+        "리치 (28)": {
+            "attack": 28,
+            "defense": 28,
+            "hp": 128
+        },
+        "베히모스 (29)": {
+            "attack": 29,
+            "defense": 29,
+            "hp": 131
+        },
+        "드래곤 (30)": {
+            "attack": 30,
+            "defense": 30,
+            "hp": 134
+        },
+        "지옥견 (31)": {
+            "attack": 31,
+            "defense": 31,
+            "hp": 137
+        },
+        "흑마법사 (32)": {
+            "attack": 32,
+            "defense": 32,
+            "hp": 141
+        },
+        "사막 전갈 (33)": {
+            "attack": 33,
+            "defense": 33,
+            "hp": 144
+        },
+        "늪지 괴물 (34)": {
+            "attack": 34,
+            "defense": 34,
+            "hp": 147
+        },
+        "설인 (35)": {
+            "attack": 35,
+            "defense": 35,
+            "hp": 151
+        },
+        "화염 정령 (36)": {
+            "attack": 36,
+            "defense": 36,
+            "hp": 154
+        },
+        "얼음 정령 (37)": {
+            "attack": 37,
+            "defense": 37,
+            "hp": 157
+        },
+        "폭풍의 정령 (38)": {
+            "attack": 38,
+            "defense": 38,
+            "hp": 160
+        },
+        "대지 정령 (39)": {
+            "attack": 39,
+            "defense": 39,
+            "hp": 164
+        },
+        "심연의 추적자 (40)": {
+            "attack": 40,
+            "defense": 40,
+            "hp": 167
+        },
+        "타락한 기사 (41)": {
+            "attack": 41,
+            "defense": 41,
+            "hp": 170
+        },
+        "광폭한 오거 (42)": {
+            "attack": 42,
+            "defense": 42,
+            "hp": 173
+        },
+        "서리 거인 (43)": {
+            "attack": 43,
+            "defense": 43,
+            "hp": 177
+        },
+        "화산 드레이크 (44)": {
+            "attack": 44,
+            "defense": 44,
+            "hp": 180
+        },
+        "철갑 고블린 (45)": {
+            "attack": 45,
+            "defense": 45,
+            "hp": 183
+        },
+        "섀도우 비스트 (46)": {
+            "attack": 46,
+            "defense": 46,
+            "hp": 186
+        },
+        "블러드 서커 (47)": {
+            "attack": 47,
+            "defense": 47,
+            "hp": 190
+        },
+        "네크로맨서 (48)": {
+            "attack": 48,
+            "defense": 48,
+            "hp": 193
+        },
+        "고대 가디언 (49)": {
+            "attack": 49,
+            "defense": 49,
+            "hp": 196
+        },
+        "마왕 (50)": {
+            "attack": 50,
+            "defense": 50,
+            "hp": 200
+        }
+    },
+    "hunting_grounds": {
+        "사냥터 1 (초원의 시작점)": {
+            "min_atk": 1,
+            "max_atk": 5,
+            "desc": "약한 슬라임과 늑대들이 출몰하는 평화로운 초원입니다."
+        },
+        "사냥터 2 (고블린 숲)": {
+            "min_atk": 6,
+            "max_atk": 10,
+            "desc": "고블린과 도적들이 무리지어 다니는 숲입니다."
+        },
+        "사냥터 3 (오크의 황야)": {
+            "min_atk": 11,
+            "max_atk": 15,
+            "desc": "난폭한 오크와 미노타우로스가 경계하는 황야입니다."
+        },
+        "사냥터 4 (버려진 지하묘지)": {
+            "min_atk": 16,
+            "max_atk": 20,
+            "desc": "언데드와 다크 엘프가 음산한 기운을 내뿜는 지하묘지입니다."
+        },
+        "사냥터 5 (드래곤의 둥지 입구)": {
+            "min_atk": 21,
+            "max_atk": 25,
+            "desc": "강력한 마물과 그리폰이 지키고 있는 험준한 산악지대입니다."
+        },
+        "사냥터 6 (화산 지대)": {
+            "min_atk": 26,
+            "max_atk": 30,
+            "desc": "불꽃과 용암이 흐르며 데스 나이트와 드래곤이 도사리는 화산입니다."
+        },
+        "사냥터 7 (심연의 협곡)": {
+            "min_atk": 31,
+            "max_atk": 35,
+            "desc": "흑마법사와 정령들이 왜곡된 힘을 행사하는 심연의 협곡입니다."
+        },
+        "사냥터 8 (마왕성 지하 감옥)": {
+            "min_atk": 36,
+            "max_atk": 50,
+            "desc": "최강의 몬스터와 마왕이 도사리고 있는 최종 결전지입니다."
+        }
+    }
+}
+```[cite: 8]
