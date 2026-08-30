@@ -186,7 +186,6 @@ def get_item_value(item_name):
         return game_data[cat][item_name]["defense"]
     elif cat == "shields":
         sh_data = game_data[cat][item_name]
-        # 방패의 능력치는 블록레이트(block_rate) 값으로 결정
         return sh_data.get("block_rate", 30)
     return 0
 
@@ -250,7 +249,10 @@ def process_auto_equip():
                 elif slot == "shield": st.session_state.equipped_shield = itm
                 if itm in st.session_state.item_inventory:
                     st.session_state.item_inventory.remove(itm)
-                add_log(f"✨ 플레이어가 인벤토리에서 **{itm}**(을)를 자동 장착했습니다.")
+                # 이전 장착 중이던 아이템이 있다면 인벤토리로 돌려줌
+                if curr:
+                    st.session_state.item_inventory.append(curr)
+                add_log(f"✨ 플레이어가 인벤토리에서 더 우수한 **{itm}**(을)를 자동 장착했습니다.")
 
     comp = st.session_state.companion
     if comp:
@@ -276,7 +278,9 @@ def process_auto_equip():
                     elif slot == "shield": comp["equipped_shield"] = itm
                     if itm in st.session_state.item_inventory:
                         st.session_state.item_inventory.remove(itm)
-                    add_log(f"✨ 동료 [{comp['name']}]이(가) 인벤토리에서 **{itm}**(을)를 자동 장착했습니다.")
+                    if curr:
+                        st.session_state.item_inventory.append(curr)
+                    add_log(f"✨ 동료 [{comp['name']}]이(가) 인벤토리에서 더 우수한 **{itm}**(을)를 자동 장착했습니다.")
     save_game_state()
 
 # 아이템 드롭 함수
@@ -455,7 +459,8 @@ if not st.session_state.game_started:
                 st.rerun()
 
 else:
-    # 게임 메인 화면
+    # 메인 화면 진입 시 인벤토리 자동 장착 검사를 항상 수행하여 우수한 장비(방패 등)를 즉시 착용
+    process_auto_equip()
     total_atk, total_def, max_hp, max_mp = get_derived_stats()
     
     with st.sidebar:
@@ -504,9 +509,10 @@ else:
         st.text(f"MP 포션: {st.session_state.inventory['mp_potion']}개")
         
         if st.session_state.item_inventory:
-            st.write("**보유 중인 추가 장비:**")
+            st.write("**보유 중인 추가 장비 및 능력치:**")
             for itm in st.session_state.item_inventory:
-                st.text(f"- {itm}")
+                stat_desc = get_item_stat_text(itm, "")
+                st.text(f"- {stat_desc}")
         else:
             st.text("보유 중인 추가 장비 없음")
             
