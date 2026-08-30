@@ -144,34 +144,44 @@
       "attack": 20
     },
     "그레이트 소드": {
-      "attack": 3
+      "attack": 3,
+      "requires_str": 10
     },
     "배틀 해머": {
-      "attack": 6
+      "attack": 6,
+      "requires_str": 10
     },
     "바바리안 액스": {
-      "attack": 9
+      "attack": 9,
+      "requires_str": 10
     },
     "클레이모어": {
-      "attack": 12
+      "attack": 12,
+      "requires_str": 10
     },
     "기간틱 슬래셔": {
-      "attack": 15
+      "attack": 15,
+      "requires_str": 10
     },
     "파괴자의 대검": {
-      "attack": 18
+      "attack": 18,
+      "requires_str": 10
     },
     "타이탄 마울": {
-      "attack": 21
+      "attack": 21,
+      "requires_str": 10
     },
     "드래곤 투스": {
-      "attack": 24
+      "attack": 24,
+      "requires_str": 10
     },
     "디스트로이어": {
-      "attack": 27
+      "attack": 27,
+      "requires_str": 10
     },
     "세계수 양손검": {
-      "attack": 30
+      "attack": 30,
+      "requires_str": 10
     }
   },
   "armors": {
@@ -278,52 +288,52 @@
   },
   "shields": {
     "나무 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 30
     },
     "가죽 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 31
     },
     "동 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 32
     },
     "철제 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 33
     },
     "강철 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 34
     },
     "기사 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 35
     },
     "미스릴 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 36
     },
     "티타늄 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 37
     },
     "드래곤 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 38
     },
     "신성한 방패": {
-      "requires_vit": 12,
+      "requires_vit": 10,
       "is_shield": true,
       "block_rate": 40
     }
