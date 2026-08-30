@@ -23,7 +23,7 @@ game_data = load_game_data()
 
 # 설정값 단축 참조
 SETTINGS = game_data.get("settings", {
-    "combat_delay": 2,
+    "combat_delay": 3,
     "min_damage": 1,
     "random_variance_min": -2,
     "random_variance_max": 2,
@@ -151,7 +151,6 @@ def get_derived_stats():
         if a_name in game_data.get("armors", {}):
             armor_def = game_data["armors"][a_name]["defense"]
             
-    # 방패는 이제 방어력을 제공하지 않고 블록율만 제공하므로 0 처리
     shield_def = 0
             
     total_atk = s["str"] + weapon_atk
@@ -187,11 +186,8 @@ def get_item_value(item_name):
         return game_data[cat][item_name]["defense"]
     elif cat == "shields":
         sh_data = game_data[cat][item_name]
-        block_rate = sh_data.get("block_rate", 30)
-        if block_rate > 1:
-            block_rate = block_rate / 100.0
-        # 방패의 가치 = 블록률 가치 환산 (자동 장착 비교용)
-        return block_rate * 50
+        # 방패의 능력치는 블록레이트(block_rate) 값으로 결정
+        return sh_data.get("block_rate", 30)
     return 0
 
 # 방패의 블록 확률 추출 함수 (퍼센트 값을 0.0 ~ 1.0 실수로 변환)
@@ -553,7 +549,7 @@ else:
                     st.warning("MP 포션 부족!")
 
     # 메인 화면
-    st.title("🗺️ 텍스트 RPG 세계관[cite: 2]")
+    st.title("🗺️ 텍스트 RPG 세계관")
     
     combat_delay = SETTINGS.get("combat_delay", 5)
 
@@ -930,7 +926,7 @@ else:
                 if st.session_state.companion is not None:
                     st.warning("이미 동료가 있습니다! 한 번에 1명만 고용할 수 있습니다.")
                 elif st.session_state.gold < hire_cost:
-                    st.warning(f"고용 비용({hire_cost} G)이 부족합니다!")
+                    st.warning(f"고용 비용({hire_cost} G)가 부족합니다!")
                 else:
                     st.session_state.gold -= hire_cost
                     
