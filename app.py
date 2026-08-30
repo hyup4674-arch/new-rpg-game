@@ -189,6 +189,25 @@ def get_item_value(item_name):
         return sh_data.get("block_rate", 30)
     return 0
 
+# 게임 데이터에 적힌 판매금액 가져오기 (없을 경우 기본값 또는 스탯 비례 자동 산출)
+def get_item_sell_price(item_name):
+    cat = get_item_category(item_name)
+    if not cat: return 10
+    item_info = game_data.get(cat, {}).get(item_name, {})
+    
+    # JSON 내부에 sell_price, price, value 등의 필드가 있다면 우선 적용
+    for key in ["sell_price", "price", "cost", "value"]:
+        if key in item_info:
+            price_val = item_info[key]
+            # 만약 구매 가격 형태로 너무 높다면 적절히 판매가(예: 50%)로 조정하거나 그대로 사용 가능
+            if key in ["price", "cost"] and price_val > 100:
+                return price_val // 2
+            return price_val
+            
+    # 별도 가격 설정이 없다면 아이템 성능 기반으로 합리적인 판매금액 책정
+    val = get_item_value(item_name)
+    return max(10, val * 10)
+
 # 방패의 블록 확률 추출 함수 (퍼센트 값을 0.0 ~ 1.0 실수로 변환)
 def get_shield_block_chance(shield_name):
     if not shield_name:
@@ -207,7 +226,6 @@ def get_item_requirements(item_name):
     min_str = item_data.get("min_str", item_data.get("req_str", item_data.get("required_str", 0)))
     min_vit = item_data.get("min_vit", item_data.get("req_vit", item_data.get("required_vit", 0)))
     
-    # JSON에 별도 명시가 없더라도, 장비의 성능(공격력/방어력 등)에 비례해 최소 힘/체력 요구치를 자동 산출하여 전사 등의 고티어 장비 제한 적용
     if min_str == 0 and min_vit == 0:
         val = get_item_value(item_name)
         if cat in ["weapons", "daggers"]:
@@ -255,7 +273,7 @@ def get_item_stat_text(item_name, item_type):
         return f"{item_name} (블록율: {br}%)"
     return item_name
 
-# 자동 장착 처리 함수 (직업 허용 규칙 및 힘/체력 요구치 조건 철저 검증)
+# 자동 장착 처리 함수
 def process_auto_equip():
     inventory_items = list(st.session_state.item_inventory)
     c_class = st.session_state.char_class
@@ -475,7 +493,6 @@ if not st.session_state.game_started:
                 st.session_state.max_mp = max_mp
                 st.session_state.mp = max_mp
                 
-                # 초기 기본 장비 자동 지급 (요구 스탯 조건 검증)
                 rules = game_data.get("class_equipment_rules", {}).get(char_class, {}).get("allowed_categories", [])
                 init_stats = st.session_state.stats
                 for cat in rules:
@@ -547,7 +564,8 @@ else:
         if st.session_state.item_inventory:
             for idx, itm in enumerate(list(st.session_state.item_inventory)):
                 stat_desc = get_item_stat_text(itm, "")
-                st.text(f"- {stat_desc}")
+                sell_p = get_item_sell_price(itm)
+                st.text(f"- {stat_desc} (판매가: {sell_p} G)")
                 
                 col_e1, col_e2 = st.columns(2)
                 with col_e1:
@@ -691,7 +709,6 @@ else:
         """, unsafe_allow_html=True)
         st.markdown("---")
         
-        # 전투 턴 처리
         min_dmg = SETTINGS.get("min_damage", 1)
         var_min = SETTINGS.get("random_variance_min", -2)
         var_max = SETTINGS.get("random_variance_max", 2)
@@ -962,7 +979,9 @@ else:
                             st.rerun()
 
         with tab2:
-            st.subheader("🛒 잡화 상점")
+            st.subheader("🛒 잡화 및 장비 상점")
+            
+            # 포션 구매 영역
             col_s1, col_s2 = st.columns(2)
             with col_s1:
                 st.write("### HP 포션 (30 G)")
@@ -986,6 +1005,26 @@ else:
                         st.rerun()
                     else:
                         st.warning("골드 부족!")
+            
+            st.markdown("---")
+            st.subheader("💰 인벤토리 아이템 판매")
+            st.write("인벤토리에 보유 중인 추가 장비를 상점에 판매하여 골드로 바꿀 수 있습니다.")
+            
+            if st.session_state.item_inventory:
+                for idx, itm in enumerate(list(st.session_state.item_inventory)):
+                    sell_p = get_item_sell_price(itm)
+                    col_i1, col_i2 = st.columns([3, 1])
+                    with col_i1:
+                        st.text(f"• {get_item_stat_text(itm, '')} | 판매가: {sell_p} G")
+                    with col_i2:
+                        if st.button("판매하기", key=f"shop_sell_{idx}_{itm}"):
+                            st.session_state.item_inventory.remove(itm)
+                            st.session_state.gold += sell_p
+                            add_log(f"💰 상점에 **{itm}**(을)를 판매하여 {sell_p} 골드를 획득했습니다.")
+                            save_game_state()
+                            st.rerun()
+            else:
+                st.info("판매할 수 있는 추가 장비가 인벤토리에 없습니다.")
 
         with tab3:
             st.subheader("🏨 여관 & 동료 고용")
