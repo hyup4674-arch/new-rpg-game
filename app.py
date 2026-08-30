@@ -7,8 +7,7 @@ import time
 # 페이지 설정
 st.set_page_config(page_title="AI 텍스트 RPG", page_icon="⚔️", layout="wide")
 
-# 순수 외부 파일(game_data.json) 로드 함수
-@st.cache_data
+# 순수 외부 파일(game_data.json) 로드 함수 (캐시 제거로 파일 수정 즉시 반영)
 def load_game_data():
     if os.path.exists("game_data.json"):
         try:
@@ -187,9 +186,27 @@ def get_item_value(item_name):
         return game_data[cat][item_name]["attack"]
     elif cat == "spells":
         return game_data[cat][item_name]["base_damage"]
-    elif cat in ["armors", "shields"]:
+    elif cat == "armors":
         return game_data[cat][item_name]["defense"]
+    elif cat == "shields":
+        sh_data = game_data[cat][item_name]
+        defense = sh_data.get("defense", 0)
+        block_rate = sh_data.get("block_rate", sh_data.get("block_bonus", 0))
+        if block_rate > 1:
+            block_rate = block_rate / 100.0
+        # 방패의 가치 = 방어력 + 블록률 가치 환산 (자동 장착 비교용)
+        return defense + (block_rate * 20)
     return 0
+
+# 방패의 블록 확률 추출 함수
+def get_shield_block_chance(shield_name):
+    if not shield_name:
+        return 0.05
+    sh_data = game_data.get("shields", {}).get(shield_name, {})
+    br = sh_data.get("block_rate", sh_data.get("block_bonus", 0.30))
+    if br > 1:
+        br = br / 100.0
+    return br if br > 0 else 0.30
 
 def can_equip(char_class, item_name):
     cat = get_item_category(item_name)
@@ -208,8 +225,12 @@ def get_item_stat_text(item_name, item_type):
         return f"{item_name} (공격력: {game_data[cat][item_name]['attack']})"
     elif cat == "spells":
         return f"{item_name} (마법력: {game_data[cat][item_name]['base_damage']})"
-    elif cat in ["armors", "shields"]:
+    elif cat == "armors":
         return f"{item_name} (방어력: {game_data[cat][item_name]['defense']})"
+    elif cat == "shields":
+        sh_data = game_data[cat][item_name]
+        br = sh_data.get("block_rate", sh_data.get("block_bonus", 30))
+        return f"{item_name} (방어력: {sh_data['defense']}, 블록율: {br}%)"
     return item_name
 
 # 자동 장착 처리 함수 (game_data의 규칙 준용)
@@ -727,7 +748,7 @@ else:
                 c_total_def = (comp['stats']['dex'] // 2) + c_armor_def + c_shield_def
                 
                 c_evade_chance = min(0.40, comp['stats']['dex'] * 0.02)
-                c_block_chance = 0.30 if comp['equipped_shield'] else 0.05
+                c_block_chance = get_shield_block_chance(comp['equipped_shield'])
                 
                 c_evaded = random.random() < c_evade_chance
                 c_blocked = False
@@ -768,7 +789,7 @@ else:
             else:
                 dex_val = st.session_state.stats['dex']
                 p_evade_chance = min(0.40, dex_val * 0.02)
-                p_block_chance = 0.30 if st.session_state.equipped_shield else 0.05
+                p_block_chance = get_shield_block_chance(st.session_state.equipped_shield)
                 
                 p_evaded = random.random() < p_evade_chance
                 p_blocked = False
