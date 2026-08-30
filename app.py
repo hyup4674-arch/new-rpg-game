@@ -249,7 +249,6 @@ def process_auto_equip():
                 elif slot == "shield": st.session_state.equipped_shield = itm
                 if itm in st.session_state.item_inventory:
                     st.session_state.item_inventory.remove(itm)
-                # 이전 장착 중이던 아이템이 있다면 인벤토리로 돌려줌
                 if curr:
                     st.session_state.item_inventory.append(curr)
                 add_log(f"✨ 플레이어가 인벤토리에서 더 우수한 **{itm}**(을)를 자동 장착했습니다.")
@@ -459,7 +458,6 @@ if not st.session_state.game_started:
                 st.rerun()
 
 else:
-    # 메인 화면 진입 시 인벤토리 자동 장착 검사를 항상 수행하여 우수한 장비(방패 등)를 즉시 착용
     process_auto_equip()
     total_atk, total_def, max_hp, max_mp = get_derived_stats()
     
@@ -508,11 +506,60 @@ else:
         st.text(f"HP 포션: {st.session_state.inventory['hp_potion']}개")
         st.text(f"MP 포션: {st.session_state.inventory['mp_potion']}개")
         
+        st.markdown("---")
+        st.subheader("🎒 보유 중인 추가 장비")
         if st.session_state.item_inventory:
-            st.write("**보유 중인 추가 장비 및 능력치:**")
-            for itm in st.session_state.item_inventory:
+            for idx, itm in enumerate(list(st.session_state.item_inventory)):
                 stat_desc = get_item_stat_text(itm, "")
                 st.text(f"- {stat_desc}")
+                
+                col_e1, col_e2 = st.columns(2)
+                with col_e1:
+                    if st.button("플레이어 착용", key=f"equip_p_{idx}"):
+                        is_ok, slot = can_equip(st.session_state.char_class, itm)
+                        if is_ok:
+                            curr = None
+                            if slot == "weapon": curr = st.session_state.equipped_weapon
+                            elif slot == "armor": curr = st.session_state.equipped_armor
+                            elif slot == "shield": curr = st.session_state.equipped_shield
+                            
+                            if slot == "weapon": st.session_state.equipped_weapon = itm
+                            elif slot == "armor": st.session_state.equipped_armor = itm
+                            elif slot == "shield": st.session_state.equipped_shield = itm
+                            
+                            st.session_state.item_inventory.remove(itm)
+                            if curr:
+                                st.session_state.item_inventory.append(curr)
+                            add_log(f"✨ 플레이어가 **{itm}**(을)를 직접 착용했습니다.")
+                            save_game_state()
+                            st.rerun()
+                        else:
+                            st.warning(f"⚠️ [{st.session_state.char_class}] 직업은 이 장비를 착용할 수 없습니다!")
+                
+                if st.session_state.companion:
+                    with col_e2:
+                        comp = st.session_state.companion
+                        if st.button("동료 착용", key=f"equip_c_{idx}"):
+                            is_ok, slot = can_equip(comp["type"], itm)
+                            if is_ok:
+                                curr = None
+                                if slot == "weapon": curr = comp["equipped_weapon"]
+                                elif slot == "armor": curr = comp["equipped_armor"]
+                                elif slot == "shield": curr = comp["equipped_shield"]
+                                
+                                if slot == "weapon": comp["equipped_weapon"] = itm
+                                elif slot == "armor": comp["equipped_armor"] = itm
+                                elif slot == "shield": comp["equipped_shield"] = itm
+                                
+                                st.session_state.item_inventory.remove(itm)
+                                if curr:
+                                    st.session_state.item_inventory.append(curr)
+                                add_log(f"✨ 동료 [{comp['name']}]이(가) **{itm}**(을)를 직접 착용했습니다.")
+                                save_game_state()
+                                st.rerun()
+                            else:
+                                st.warning(f"⚠️ [{comp['type']}] 직업은 이 장비를 착용할 수 없습니다!")
+                st.markdown("---")
         else:
             st.text("보유 중인 추가 장비 없음")
             
