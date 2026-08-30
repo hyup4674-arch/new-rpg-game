@@ -23,7 +23,7 @@ game_data = load_game_data()
 
 # 설정값 단축 참조
 SETTINGS = game_data.get("settings", {
-    "combat_delay": 3,
+    "combat_delay": 2,
     "min_damage": 1,
     "random_variance_min": -2,
     "random_variance_max": 2,
@@ -151,11 +151,8 @@ def get_derived_stats():
         if a_name in game_data.get("armors", {}):
             armor_def = game_data["armors"][a_name]["defense"]
             
+    # 방패는 이제 방어력을 제공하지 않고 블록율만 제공하므로 0 처리
     shield_def = 0
-    if st.session_state.equipped_shield:
-        sh_name = st.session_state.equipped_shield
-        if sh_name in game_data.get("shields", {}):
-            shield_def = game_data["shields"][sh_name]["defense"]
             
     total_atk = s["str"] + weapon_atk
     total_def = (s["dex"] // 2) + armor_def + shield_def
@@ -190,23 +187,22 @@ def get_item_value(item_name):
         return game_data[cat][item_name]["defense"]
     elif cat == "shields":
         sh_data = game_data[cat][item_name]
-        defense = sh_data.get("defense", 0)
-        block_rate = sh_data.get("block_rate", sh_data.get("block_bonus", 0))
+        block_rate = sh_data.get("block_rate", 30)
         if block_rate > 1:
             block_rate = block_rate / 100.0
-        # 방패의 가치 = 방어력 + 블록률 가치 환산 (자동 장착 비교용)
-        return defense + (block_rate * 20)
+        # 방패의 가치 = 블록률 가치 환산 (자동 장착 비교용)
+        return block_rate * 50
     return 0
 
-# 방패의 블록 확률 추출 함수
+# 방패의 블록 확률 추출 함수 (퍼센트 값을 0.0 ~ 1.0 실수로 변환)
 def get_shield_block_chance(shield_name):
     if not shield_name:
-        return 0.05
+        return 0.0
     sh_data = game_data.get("shields", {}).get(shield_name, {})
-    br = sh_data.get("block_rate", sh_data.get("block_bonus", 0.30))
+    br = sh_data.get("block_rate", 30)
     if br > 1:
         br = br / 100.0
-    return br if br > 0 else 0.30
+    return br if br > 0 else 0.0
 
 def can_equip(char_class, item_name):
     cat = get_item_category(item_name)
@@ -229,8 +225,8 @@ def get_item_stat_text(item_name, item_type):
         return f"{item_name} (방어력: {game_data[cat][item_name]['defense']})"
     elif cat == "shields":
         sh_data = game_data[cat][item_name]
-        br = sh_data.get("block_rate", sh_data.get("block_bonus", 30))
-        return f"{item_name} (방어력: {sh_data['defense']}, 블록율: {br}%)"
+        br = sh_data.get("block_rate", 30)
+        return f"{item_name} (블록율: {br}%)"
     return item_name
 
 # 자동 장착 처리 함수 (game_data의 규칙 준용)
@@ -306,7 +302,10 @@ def handle_item_drop(m_atk, m_def):
         candidates = []
         for cat in ["armors", "shields"]:
             for a_n, a_d in game_data.get(cat, {}).items():
-                if a_d["defense"] == m_def: candidates.append(a_n)
+                if cat == "armors" and a_d.get("defense") == m_def:
+                    candidates.append(a_n)
+                elif cat == "shields":
+                    candidates.append(a_n)
         if candidates: dropped_item = random.choice(candidates)
             
     if dropped_item:
@@ -554,7 +553,7 @@ else:
                     st.warning("MP 포션 부족!")
 
     # 메인 화면
-    st.title("🗺️ 텍스트 RPG 세계관")
+    st.title("🗺️ 텍스트 RPG 세계관[cite: 2]")
     
     combat_delay = SETTINGS.get("combat_delay", 5)
 
@@ -744,8 +743,7 @@ else:
             
             if target_is_companion:
                 c_armor_def = game_data["armors"][comp['equipped_armor']]["defense"] if comp['equipped_armor'] and comp['equipped_armor'] in game_data.get("armors", {}) else 0
-                c_shield_def = game_data["shields"][comp['equipped_shield']]["defense"] if comp['equipped_shield'] and comp['equipped_shield'] in game_data.get("shields", {}) else 0
-                c_total_def = (comp['stats']['dex'] // 2) + c_armor_def + c_shield_def
+                c_total_def = (comp['stats']['dex'] // 2) + c_armor_def
                 
                 c_evade_chance = min(0.40, comp['stats']['dex'] * 0.02)
                 c_block_chance = get_shield_block_chance(comp['equipped_shield'])
