@@ -199,14 +199,45 @@ def get_shield_block_chance(shield_name):
         br = br / 100.0
     return br if br > 0 else 0.0
 
-def can_equip(char_class, item_name):
+# 아이템별 요구 스탯(힘, 체력 등) 확인 함수 (전사 및 기타 직업 착용 제한 강화)
+def get_item_requirements(item_name):
     cat = get_item_category(item_name)
-    if not cat: return False, None
+    if not cat: return 0, 0
+    item_data = game_data.get(cat, {}).get(item_name, {})
+    min_str = item_data.get("min_str", item_data.get("req_str", item_data.get("required_str", 0)))
+    min_vit = item_data.get("min_vit", item_data.get("req_vit", item_data.get("required_vit", 0)))
+    
+    # JSON에 별도 명시가 없더라도, 장비의 성능(공격력/방어력 등)에 비례해 최소 힘/체력 요구치를 자동 산출하여 전사 등의 고티어 장비 제한 적용
+    if min_str == 0 and min_vit == 0:
+        val = get_item_value(item_name)
+        if cat in ["weapons", "daggers"]:
+            if val >= 10:
+                min_str = val // 2
+        elif cat in ["armors", "shields"]:
+            if val >= 10:
+                min_vit = val // 2
+    return min_str, min_vit
+
+def can_equip(char_class, item_name, stats=None):
+    cat = get_item_category(item_name)
+    if not cat: return False, None, "존재하지 않는 아이템입니다."
+    
     rules = game_data.get("class_equipment_rules", {}).get(char_class, {})
     allowed = rules.get("allowed_categories", [])
-    if cat in allowed:
-        return True, ITEM_CATEGORY_SLOTS[cat]
-    return False, None
+    if cat not in allowed:
+        return False, None, f"[{char_class}] 직업은 이 장비 카테고리를 착용할 수 없습니다."
+        
+    if stats:
+        min_str, min_vit = get_item_requirements(item_name)
+        current_str = stats.get("str", 0)
+        current_vit = stats.get("vit", 0)
+        
+        if current_str < min_str:
+            return False, None, f"힘(STR)이 부족합니다! (필요 힘: {min_str}, 현재 힘: {current_str})"
+        if current_vit < min_vit:
+            return False, None, f"체력(VIT)이 부족합니다! (필요 체력: {min_vit}, 현재 체력: {current_vit})"
+            
+    return True, ITEM_CATEGORY_SLOTS[cat], "착용 가능"
 
 def get_item_stat_text(item_name, item_type):
     if not item_name:
@@ -224,13 +255,14 @@ def get_item_stat_text(item_name, item_type):
         return f"{item_name} (블록율: {br}%)"
     return item_name
 
-# 자동 장착 처리 함수 (game_data의 규칙 준용)
+# 자동 장착 처리 함수 (직업 허용 규칙 및 힘/체력 요구치 조건 철저 검증)
 def process_auto_equip():
     inventory_items = list(st.session_state.item_inventory)
     c_class = st.session_state.char_class
+    p_stats = st.session_state.stats
     
     for itm in inventory_items:
-        is_ok, slot = can_equip(c_class, itm)
+        is_ok, slot, _ = can_equip(c_class, itm, p_stats)
         if is_ok:
             curr = None
             if slot == "weapon": curr = st.session_state.equipped_weapon
@@ -256,9 +288,10 @@ def process_auto_equip():
     comp = st.session_state.companion
     if comp:
         c_type = comp["type"]
+        c_stats = comp["stats"]
         inventory_items_comp = list(st.session_state.item_inventory)
         for itm in inventory_items_comp:
-            is_ok, slot = can_equip(c_type, itm)
+            is_ok, slot, _ = can_equip(c_type, itm, c_stats)
             if is_ok:
                 curr = None
                 if slot == "weapon": curr = comp["equipped_weapon"]
@@ -414,11 +447,11 @@ if not st.session_state.game_started:
 
     with col2:
         st.info("""
-        ### 🛡️ 직업별 특징 및 장착 제한
-        * **전사 (Warrior)**: 일반 무기, 방패, 갑옷 장착 가능
+        ### 🛡️ 직업별 특징 및 착용 제한
+        * **전사 (Warrior)**: 일반 무기, 방패, 갑옷 장착 가능 (단, 충분한 힘/체력 필요)
         * **암살자 (Assassin)**: 단검, 갑옷 장착 가능
         * **마법사 (Mage)**: 마법(스펠), 갑옷 장착 가능
-        *(모든 장착 규칙은 game_data.json에서 직접 변경할 수 있습니다.)*
+        *(힘 또는 체력이 부족할 경우 상위 장비를 착용할 수 없습니다.)*
         """)
         
         if st.button("🚀 모험 시작하기", type="primary", use_container_width=True):
@@ -442,15 +475,18 @@ if not st.session_state.game_started:
                 st.session_state.max_mp = max_mp
                 st.session_state.mp = max_mp
                 
-                # 초기 기본 장비 자동 지급
+                # 초기 기본 장비 자동 지급 (요구 스탯 조건 검증)
                 rules = game_data.get("class_equipment_rules", {}).get(char_class, {}).get("allowed_categories", [])
+                init_stats = st.session_state.stats
                 for cat in rules:
                     if cat in game_data and game_data[cat]:
-                        first_item = list(game_data[cat].keys())[0]
-                        slot = ITEM_CATEGORY_SLOTS[cat]
-                        if slot == "weapon": st.session_state.equipped_weapon = first_item
-                        elif slot == "armor": st.session_state.equipped_armor = first_item
-                        elif slot == "shield": st.session_state.equipped_shield = first_item
+                        for first_item in game_data[cat].keys():
+                            ok, slot, _ = can_equip(char_class, first_item, init_stats)
+                            if ok:
+                                if slot == "weapon": st.session_state.equipped_weapon = first_item
+                                elif slot == "armor": st.session_state.equipped_armor = first_item
+                                elif slot == "shield": st.session_state.equipped_shield = first_item
+                                break
                     
                 st.session_state.game_started = True
                 add_log(f"[{char_name}] ({char_class}) 모험가가 탄생했습니다!")
@@ -516,7 +552,7 @@ else:
                 col_e1, col_e2 = st.columns(2)
                 with col_e1:
                     if st.button("플레이어 착용", key=f"equip_p_{idx}"):
-                        is_ok, slot = can_equip(st.session_state.char_class, itm)
+                        is_ok, slot, reason = can_equip(st.session_state.char_class, itm, st.session_state.stats)
                         if is_ok:
                             curr = None
                             if slot == "weapon": curr = st.session_state.equipped_weapon
@@ -534,13 +570,13 @@ else:
                             save_game_state()
                             st.rerun()
                         else:
-                            st.warning(f"⚠️ [{st.session_state.char_class}] 직업은 이 장비를 착용할 수 없습니다!")
+                            st.warning(f"⚠️ {reason}")
                 
                 if st.session_state.companion:
                     with col_e2:
                         comp = st.session_state.companion
                         if st.button("동료 착용", key=f"equip_c_{idx}"):
-                            is_ok, slot = can_equip(comp["type"], itm)
+                            is_ok, slot, reason = can_equip(comp["type"], itm, comp['stats'])
                             if is_ok:
                                 curr = None
                                 if slot == "weapon": curr = comp["equipped_weapon"]
@@ -558,7 +594,7 @@ else:
                                 save_game_state()
                                 st.rerun()
                             else:
-                                st.warning(f"⚠️ [{comp['type']}] 직업은 이 장비를 착용할 수 없습니다!")
+                                st.warning(f"⚠️ {reason}")
                 st.markdown("---")
         else:
             st.text("보유 중인 추가 장비 없음")
