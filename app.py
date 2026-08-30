@@ -7,12 +7,17 @@ import time
 # 페이지 설정
 st.set_page_config(page_title="AI 텍스트 RPG", page_icon="⚔️", layout="wide")
 
-# 데이터 로드 함수
+# 순수 외부 파일(game_data.json) 로드 함수
 @st.cache_data
 def load_game_data():
     if os.path.exists("game_data.json"):
-        with open("game_data.json", "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open("game_data.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if data:
+                    return data
+        except Exception as e:
+            st.error(f"game_data.json 파일 로드 중 오류 발생: {e}")
     return {}
 
 game_data = load_game_data()
@@ -34,6 +39,7 @@ if "initialized" not in st.session_state:
     st.session_state.in_combat = False
     st.session_state.combat_monster = None
     st.session_state.combat_turn = "player"
+    st.session_state.last_combat_msg = "⚔️ 사냥터에서 사냥을 시작하면 실시간 전투 계산 결과가 여기에 표시됩니다."
     
     # 장착 아이템
     st.session_state.equipped_weapon = None
@@ -56,6 +62,8 @@ else:
         st.session_state.combat_monster = None
     if "combat_turn" not in st.session_state:
         st.session_state.combat_turn = "player"
+    if "last_combat_msg" not in st.session_state:
+        st.session_state.last_combat_msg = "⚔️ 전투 대기 중..."
 
 def add_log(msg):
     st.session_state.logs.insert(0, msg)
@@ -92,7 +100,7 @@ def get_derived_stats():
     
     return total_atk, total_def, max_hp, max_mp
 
-# 아이템 드롭 및 자동 장착/보관 처리 함수 (드롭율 10%)
+# 아이템 드롭 및 자동 장착/보관 처리 함수
 def handle_item_drop(m_atk, m_def):
     drop_type = random.choice(["weapon_or_spell", "armor_or_shield"])
     dropped_item = None
@@ -177,10 +185,71 @@ def handle_item_drop(m_atk, m_def):
             st.session_state.item_inventory.append(dropped_item)
             add_log(f"📦 직업 제한으로 장착할 수 없어 {dropped_item}을(를) 인벤토리에 보관했습니다.")
 
+# game_data 파일 유무 체크 경고
+if not game_data:
+    st.error("⚠️ 루트 디렉토리에 `game_data.json` 파일이 존재하지 않거나 내용이 비어 있습니다. 게임 데이터를 포함한 `game_data.json` 파일을 추가해주세요.")
+
+# ----------------- 사이드바: 저장 및 불러오기 메뉴 추가 -----------------
+with st.sidebar:
+    st.title("💾 게임 데이터 관리")
+    st.markdown("현재 진행 상황을 내 기기에 저장하거나 저장된 파일을 불러올 수 있습니다.")
+    
+    # 1. 게임 저장 (다운로드 버튼)
+    if st.session_state.game_started:
+        save_data = {
+            "game_started": st.session_state.game_started,
+            "char_name": st.session_state.char_name,
+            "char_class": st.session_state.char_class,
+            "stats": st.session_state.stats,
+            "hp": st.session_state.hp,
+            "max_hp": st.session_state.max_hp,
+            "mp": st.session_state.mp,
+            "max_mp": st.session_state.max_mp,
+            "gold": st.session_state.gold,
+            "in_combat": st.session_state.in_combat,
+            "combat_monster": st.session_state.combat_monster,
+            "combat_turn": st.session_state.combat_turn,
+            "last_combat_msg": st.session_state.last_combat_msg,
+            "equipped_weapon": st.session_state.equipped_weapon,
+            "equipped_armor": st.session_state.equipped_armor,
+            "equipped_shield": st.session_state.equipped_shield,
+            "inventory": st.session_state.inventory,
+            "item_inventory": st.session_state.item_inventory,
+            "logs": st.session_state.logs
+        }
+        json_bytes = json.dumps(save_data, ensure_ascii=False, indent=4).encode("utf-8")
+        st.download_button(
+            label="📥 내 기기에 게임 저장하기",
+            data=json_bytes,
+            file_name=f"rpg_save_{st.session_state.char_name}.json",
+            mime="application/json",
+            use_container_width=True
+        )
+    else:
+        st.info("캐릭터 생성 후 저장 기능을 사용할 수 있습니다.")
+
+    st.markdown("---")
+    
+    # 2. 게임 불러오기 (파일 업로드)
+    uploaded_save_file = st.file_uploader("📂 저장 파일 불러오기", type=["json"])
+    if uploaded_save_file is not None:
+        try:
+            loaded_data = json.load(uploaded_save_file)
+            for k, v in loaded_data.items():
+                st.session_state[k] = v
+            st.session_state["initialized"] = True
+            st.success("🎉 게임 데이터를 성공적으로 불러왔습니다!")
+            time.sleep(1)
+            st.rerun()
+        except Exception as e:
+            st.error(f"저장 파일을 읽는 중 오류가 발생했습니다: {e}")
+
+    st.markdown("---")
+
 # ----------------- UI: 캐릭터 생성 화면 -----------------
 if not st.session_state.game_started:
     st.title("⚔️ AI 텍스트 RPG: 모험의 시작")
-    st.markdown("캐릭터를 생성하고 모험을 떠나세요!")
+    st.markdown("캐릭터를 생성하거나, 사이드바에서 기존 저장 파일을 불러와 모험을 계속하세요!")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -227,6 +296,8 @@ if not st.session_state.game_started:
         if st.button("🚀 모험 시작하기", type="primary", use_container_width=True):
             if current_sum != 10:
                 st.warning("보너스 포인트 10점을 모두 분배해주세요!")
+            elif not game_data:
+                st.error("game_data.json 데이터가 로드되지 않아 게임을 시작할 수 없습니다.")
             else:
                 st.session_state.char_name = char_name
                 st.session_state.char_class = char_class
@@ -244,16 +315,16 @@ if not st.session_state.game_started:
                 st.session_state.mp = max_mp
                 
                 if char_class == "전사":
-                    st.session_state.equipped_weapon = "루키 숏소드"
-                    st.session_state.equipped_armor = "누더기 갑옷세트"
-                    st.session_state.equipped_shield = "나무 방패"
+                    st.session_state.equipped_weapon = list(game_data.get("weapons", {}).keys())[0] if game_data.get("weapons") else None
+                    st.session_state.equipped_armor = list(game_data.get("armors", {}).keys())[0] if game_data.get("armors") else None
+                    st.session_state.equipped_shield = list(game_data.get("shields", {}).keys())[0] if game_data.get("shields") else None
                 elif char_class == "암살자":
-                    st.session_state.equipped_weapon = "낡은 단검"
-                    st.session_state.equipped_armor = "누더기 갑옷세트"
+                    st.session_state.equipped_weapon = list(game_data.get("weapons", {}).keys())[0] if game_data.get("weapons") else None
+                    st.session_state.equipped_armor = list(game_data.get("armors", {}).keys())[0] if game_data.get("armors") else None
                     st.session_state.equipped_shield = None
                 elif char_class == "마법사":
-                    st.session_state.equipped_weapon = "작은 불꽃"
-                    st.session_state.equipped_armor = "누더기 갑옷세트"
+                    st.session_state.equipped_weapon = list(game_data.get("spells", {}).keys())[0] if game_data.get("spells") else None
+                    st.session_state.equipped_armor = list(game_data.get("armors", {}).keys())[0] if game_data.get("armors") else None
                     st.session_state.equipped_shield = None
                     
                 st.session_state.game_started = True
@@ -264,8 +335,9 @@ else:
     # ----------------- 게임 메인 화면 -----------------
     total_atk, total_def, max_hp, max_mp = get_derived_stats()
     
-    # 좌측 사이드바: 캐릭터 상태 및 인벤토리
+    # 좌측 사이드바: 캐릭터 상태 및 인벤토리 (기존 내용 추가)
     with st.sidebar:
+        st.markdown("---")
         st.title(f"👤 {st.session_state.char_name}")
         st.caption(f"직업: **{st.session_state.char_class}**")
         st.markdown("---")
@@ -345,9 +417,13 @@ else:
             
         st.markdown("---")
         
+        # 화면 중앙 실시간 전투 계산 결과 강조 박스
+        st.markdown("### ⚡ 최근 전투 계산 결과")
+        st.info(st.session_state.last_combat_msg)
+        st.markdown("---")
+        
         # 전투 턴 처리 (2초마다 교대 공격)
         if st.session_state.combat_turn == "player":
-            # 플레이어 턴: 가장 강한 공격 또는 마법 사용 (MP 5 소모, 부족시 기본 공격)
             c_class = st.session_state.char_class
             base_attack_power = total_atk
             action_desc = "기본 공격"
@@ -379,21 +455,23 @@ else:
                 dmg_to_m = 0
             elif m_blocked:
                 raw_dmg = max(1, base_attack_power - cm['def'] + random.randint(-2, 2))
-                dmg_to_m = max(1, raw_dmg // 2) # 블록 시 데미지 반감
+                dmg_to_m = max(1, raw_dmg // 2)
             else:
                 dmg_to_m = max(1, base_attack_power - cm['def'] + random.randint(-2, 2))
                 
             cm['hp'] -= dmg_to_m
             
-            log_msg = f"⚔️ [플레이어 공격] {action_desc} | 공격 데미지: {base_attack_power} | 적 데미지(피해): {dmg_to_m} | 적 회피: {evasion_str} | 적 블록: {block_str}"
+            log_msg = f"⚔️ [플레이어 공격] {action_desc} | 공격 데미지: {base_attack_power} | 적 피해 데미지: {dmg_to_m} | 적 회피: {evasion_str} | 적 블록: {block_str}"
+            st.session_state.last_combat_msg = log_msg
             add_log(log_msg)
             
             if cm['hp'] <= 0:
-                add_log(f"🎉 **{cm['name']}** 처치 성공! (+{cm['atk'] * 5} 골드)")
+                win_msg = f"🎉 **{cm['name']}** 처치 성공! (+{cm['atk'] * 5} 골드)"
+                st.session_state.last_combat_msg = win_msg
+                add_log(win_msg)
                 st.session_state.gold += cm['atk'] * 5
                 st.session_state.in_combat = False
                 
-                # 10% 확률 아이템 드롭
                 if random.random() < 0.10:
                     handle_item_drop(cm['atk'], cm['def'])
                     
@@ -405,10 +483,8 @@ else:
                 st.rerun()
                 
         elif st.session_state.combat_turn == "monster":
-            # 적 턴: 플레이어 공격
             monster_atk = cm['atk']
             
-            # 플레이어 회피율 (민첩 * 2%, 최대 40%) 및 블록율 (방패 착용시 30%, 미착용시 5%)
             dex_val = st.session_state.stats['dex']
             p_evade_chance = min(0.40, dex_val * 0.02)
             p_block_chance = 0.30 if st.session_state.equipped_shield else 0.05
@@ -425,17 +501,20 @@ else:
                 dmg_to_p = 0
             elif p_blocked:
                 raw_dmg = max(1, monster_atk - total_def + random.randint(-1, 1))
-                dmg_to_p = max(0, raw_dmg // 2) # 방어구/방패 블록 시 피해 경감
+                dmg_to_p = max(0, raw_dmg // 2)
             else:
                 dmg_to_p = max(1, monster_atk - total_def + random.randint(-1, 1))
                 
             st.session_state.hp -= dmg_to_p
             
-            log_msg = f"💥 [적 공격] {cm['name']}의 공격 | 공격 데미지: {monster_atk} | 내 데미지(피해): {dmg_to_p} | 내 회피: {evasion_str} | 내 블록: {block_str}"
+            log_msg = f"💥 [적 공격] {cm['name']}의 공격 | 공격 데미지: {monster_atk} | 내 피해 데미지: {dmg_to_p} | 내 회피: {evasion_str} | 내 블록: {block_str}"
+            st.session_state.last_combat_msg = log_msg
             add_log(log_msg)
             
             if st.session_state.hp <= 0:
-                add_log("💀 전투에서 패배하여 사망했습니다... 마을로 부활합니다. (착용 중인 모든 장비 소실!)")
+                lose_msg = "💀 전투에서 패배하여 사망했습니다... 마을로 부활합니다. (착용 중인 모든 장비 소실!)"
+                st.session_state.last_combat_msg = lose_msg
+                add_log(lose_msg)
                 st.session_state.hp = max_hp
                 st.session_state.mp = max_mp
                 st.session_state.equipped_weapon = None
@@ -456,32 +535,39 @@ else:
         with tab1:
             st.subheader("사냥터 선택")
             h_grounds = game_data.get("hunting_grounds", {})
-            selected_hg = st.selectbox("사냥터를 선택하세요", list(h_grounds.keys()))
-            
-            if selected_hg:
-                hg_info = h_grounds[selected_hg]
-                st.info(f"**설명:** {hg_info['desc']} (몬스터 공격력: {hg_info['min_atk']} ~ {hg_info['max_atk']})")
+            if not h_grounds:
+                st.warning("game_data.json에 사냥터(hunting_grounds) 데이터가 없습니다.")
+            else:
+                selected_hg = st.selectbox("사냥터를 선택하세요", list(h_grounds.keys()))
                 
-                if st.button("⚔️ 사냥 시작!", type="primary"):
-                    monsters = game_data.get("monsters", {})
-                    valid_monsters = [
-                        (m_name, m_data) for m_name, m_data in monsters.items() 
-                        if hg_info['min_atk'] <= m_data['attack'] <= hg_info['max_atk']
-                    ]
+                if selected_hg:
+                    hg_info = h_grounds[selected_hg]
+                    st.info(f"**설명:** {hg_info['desc']} (몬스터 공격력: {hg_info['min_atk']} ~ {hg_info['max_atk']})")
                     
-                    if valid_monsters:
-                        m_name, m_data = random.choice(valid_monsters)
-                        st.session_state.combat_monster = {
-                            "name": m_name,
-                            "hp": m_data['hp'],
-                            "max_hp": m_data['hp'],
-                            "atk": m_data['attack'],
-                            "def": m_data['defense']
-                        }
-                        st.session_state.combat_turn = "player"
-                        st.session_state.in_combat = True
-                        add_log(f" 야생의 **{m_name}** (공격력:{m_data['attack']}, 방어력:{m_data['defense']}, HP:{m_data['hp']}) 출현!")
-                        st.rerun()
+                    if st.button("⚔️ 사냥 시작!", type="primary"):
+                        monsters = game_data.get("monsters", {})
+                        valid_monsters = [
+                            (m_name, m_data) for m_name, m_data in monsters.items() 
+                            if hg_info['min_atk'] <= m_data['attack'] <= hg_info['max_atk']
+                        ]
+                        
+                        if not valid_monsters:
+                            st.error("해당 사냥터 범위에 일치하는 몬스터 데이터가 game_data.json에 없습니다.")
+                        else:
+                            m_name, m_data = random.choice(valid_monsters)
+                            st.session_state.combat_monster = {
+                                "name": m_name,
+                                "hp": m_data['hp'],
+                                "max_hp": m_data['hp'],
+                                "atk": m_data['attack'],
+                                "def": m_data['defense']
+                            }
+                            st.session_state.combat_turn = "player"
+                            st.session_state.in_combat = True
+                            start_msg = f"야생의 **{m_name}** (공격력:{m_data['attack']}, 방어력:{m_data['defense']}, HP:{m_data['hp']}) 출현!"
+                            st.session_state.last_combat_msg = start_msg
+                            add_log(start_msg)
+                            st.rerun()
 
         with tab2:
             st.subheader("🛒 잡화 상점")
