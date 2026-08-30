@@ -48,7 +48,6 @@ if "initialized" not in st.session_state:
     st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
     st.session_state.initialized = True
 else:
-    # 이미 생성된 세션에 새로 추가된 상태값이 없을 경우 안전하게 기본값 부여
     if "item_inventory" not in st.session_state:
         st.session_state.item_inventory = []
     if "in_combat" not in st.session_state:
@@ -93,7 +92,7 @@ def get_derived_stats():
     
     return total_atk, total_def, max_hp, max_mp
 
-# 아이템 드롭 및 자동 장착/보관 처리 함수
+# 아이템 드롭 및 자동 장착/보관 처리 함수 (드롭율 10%)
 def handle_item_drop(m_atk, m_def):
     drop_type = random.choice(["weapon_or_spell", "armor_or_shield"])
     dropped_item = None
@@ -325,9 +324,9 @@ else:
     # 메인 화면
     st.title("🗺️ 텍스트 RPG 세계관")
     
-    # 전투 중일 때의 화면
+    # 전투 중일 때의 화면 (2초마다 자동 공격 및 결과 표시)
     if st.session_state.in_combat:
-        st.subheader("⚔️ 실시간 전투 진행 중...")
+        st.subheader("⚔️ 실시간 전투 진행 중 (2초 간격)")
         cm = st.session_state.combat_monster
         
         # 좌우 HP 바 표시
@@ -346,14 +345,13 @@ else:
             
         st.markdown("---")
         
-        # 자동 턴 처리 (4초 간격)
+        # 전투 턴 처리 (2초마다 교대 공격)
         if st.session_state.combat_turn == "player":
-            # 플레이어 턴: 가장 강력한 공격 또는 마법 사용 (마법은 MP 5 소모)
+            # 플레이어 턴: 가장 강한 공격 또는 마법 사용 (MP 5 소모, 부족시 기본 공격)
             c_class = st.session_state.char_class
-            best_dmg = total_atk
+            base_attack_power = total_atk
             action_desc = "기본 공격"
             
-            # 마법사 또는 마법 보유 시 가장 강한 마법 탐색
             best_spell_dmg = 0
             best_spell_name = None
             for sp_n, sp_d in game_data.get("spells", {}).items():
@@ -364,13 +362,31 @@ else:
                         best_spell_name = sp_n
             
             if best_spell_name and st.session_state.mp >= 5:
-                best_dmg = best_spell_dmg
+                base_attack_power = best_spell_dmg
                 st.session_state.mp -= 5
-                action_desc = f"마법 [{best_spell_name}] (MP -5)"
+                action_desc = f"마법 [{best_spell_name}] (마나 5 소모)"
             
-            dmg_to_m = max(1, best_dmg - cm['def'] + random.randint(-2, 2))
+            # 적의 회피 및 블록 확률 계산 (각 10%)
+            m_evaded = random.random() < 0.10
+            m_blocked = False
+            if not m_evaded:
+                m_blocked = random.random() < 0.10
+                
+            evasion_str = "성공" if m_evaded else "실패"
+            block_str = "성공" if m_blocked else "실패"
+            
+            if m_evaded:
+                dmg_to_m = 0
+            elif m_blocked:
+                raw_dmg = max(1, base_attack_power - cm['def'] + random.randint(-2, 2))
+                dmg_to_m = max(1, raw_dmg // 2) # 블록 시 데미지 반감
+            else:
+                dmg_to_m = max(1, base_attack_power - cm['def'] + random.randint(-2, 2))
+                
             cm['hp'] -= dmg_to_m
-            add_log(f"⚔️ {st.session_state.char_name}의 {action_desc}! -> {cm['name']}에게 {dmg_to_m} 데미지!")
+            
+            log_msg = f"⚔️ [플레이어 공격] {action_desc} | 공격 데미지: {base_attack_power} | 적 데미지(피해): {dmg_to_m} | 적 회피: {evasion_str} | 적 블록: {block_str}"
+            add_log(log_msg)
             
             if cm['hp'] <= 0:
                 add_log(f"🎉 **{cm['name']}** 처치 성공! (+{cm['atk'] * 5} 골드)")
@@ -385,13 +401,38 @@ else:
                 st.rerun()
             else:
                 st.session_state.combat_turn = "monster"
-                time.sleep(4)
+                time.sleep(2)
                 st.rerun()
                 
         elif st.session_state.combat_turn == "monster":
-            dmg_to_p = max(1, cm['atk'] - total_def + random.randint(-1, 1))
+            # 적 턴: 플레이어 공격
+            monster_atk = cm['atk']
+            
+            # 플레이어 회피율 (민첩 * 2%, 최대 40%) 및 블록율 (방패 착용시 30%, 미착용시 5%)
+            dex_val = st.session_state.stats['dex']
+            p_evade_chance = min(0.40, dex_val * 0.02)
+            p_block_chance = 0.30 if st.session_state.equipped_shield else 0.05
+            
+            p_evaded = random.random() < p_evade_chance
+            p_blocked = False
+            if not p_evaded:
+                p_blocked = random.random() < p_block_chance
+                
+            evasion_str = "성공" if p_evaded else "실패"
+            block_str = "성공" if p_blocked else "실패"
+            
+            if p_evaded:
+                dmg_to_p = 0
+            elif p_blocked:
+                raw_dmg = max(1, monster_atk - total_def + random.randint(-1, 1))
+                dmg_to_p = max(0, raw_dmg // 2) # 방어구/방패 블록 시 피해 경감
+            else:
+                dmg_to_p = max(1, monster_atk - total_def + random.randint(-1, 1))
+                
             st.session_state.hp -= dmg_to_p
-            add_log(f"💥 {cm['name']}의 공격! -> {st.session_state.char_name}에게 {dmg_to_p} 데미지!")
+            
+            log_msg = f"💥 [적 공격] {cm['name']}의 공격 | 공격 데미지: {monster_atk} | 내 데미지(피해): {dmg_to_p} | 내 회피: {evasion_str} | 내 블록: {block_str}"
+            add_log(log_msg)
             
             if st.session_state.hp <= 0:
                 add_log("💀 전투에서 패배하여 사망했습니다... 마을로 부활합니다. (착용 중인 모든 장비 소실!)")
@@ -405,7 +446,7 @@ else:
                 st.rerun()
             else:
                 st.session_state.combat_turn = "player"
-                time.sleep(4)
+                time.sleep(2)
                 st.rerun()
 
     else:
