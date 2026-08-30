@@ -1,6 +1,6 @@
 {
   "settings": {
-    "combat_delay": 3,
+    "combat_delay": 2,
     "min_damage": 1,
     "random_variance_min": -2,
     "random_variance_max": 2,
