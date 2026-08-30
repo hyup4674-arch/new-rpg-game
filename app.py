@@ -189,12 +189,11 @@ def handle_item_drop(m_atk, m_def):
 if not game_data:
     st.error("⚠️ 루트 디렉토리에 `game_data.json` 파일이 존재하지 않거나 내용이 비어 있습니다. 게임 데이터를 포함한 `game_data.json` 파일을 추가해주세요.")
 
-# ----------------- 사이드바: 저장 및 불러오기 메뉴 추가 -----------------
+# ----------------- 사이드바: 저장 및 불러오기 메뉴 -----------------
 with st.sidebar:
     st.title("💾 게임 데이터 관리")
     st.markdown("현재 진행 상황을 내 기기에 저장하거나 저장된 파일을 불러올 수 있습니다.")
     
-    # 1. 게임 저장 (다운로드 버튼)
     if st.session_state.game_started:
         save_data = {
             "game_started": st.session_state.game_started,
@@ -230,7 +229,6 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 2. 게임 불러오기 (파일 업로드)
     uploaded_save_file = st.file_uploader("📂 저장 파일 불러오기", type=["json"])
     if uploaded_save_file is not None:
         try:
@@ -335,7 +333,7 @@ else:
     # ----------------- 게임 메인 화면 -----------------
     total_atk, total_def, max_hp, max_mp = get_derived_stats()
     
-    # 좌측 사이드바: 캐릭터 상태 및 인벤토리 (기존 내용 추가)
+    # 좌측 사이드바: 캐릭터 상태 및 인벤토리
     with st.sidebar:
         st.markdown("---")
         st.title(f"👤 {st.session_state.char_name}")
@@ -396,37 +394,51 @@ else:
     # 메인 화면
     st.title("🗺️ 텍스트 RPG 세계관")
     
-    # 전투 중일 때의 화면 (2초마다 자동 공격 및 결과 표시)
+    # 전투 중일 때의 화면
     if st.session_state.in_combat:
         st.subheader("⚔️ 실시간 전투 진행 중 (2초 간격)")
         cm = st.session_state.combat_monster
         
-        # 좌우 HP 바 표시
+        # ----------------- 큼지막하고 색상이 적용된 HP 바 -----------------
         col_c1, col_c2 = st.columns(2)
+        
+        # 1. 플레이어 HP 바 (붉은색 #ff4b4b, 큼지막한 높이 30px)
         with col_c1:
-            st.write(f"**👤 {st.session_state.char_name} (플레이어)**")
-            hp_ratio = max(0.0, min(1.0, st.session_state.hp / float(max_hp)))
-            st.progress(hp_ratio)
-            st.text(f"HP: {st.session_state.hp} / {max_hp} | MP: {st.session_state.mp} / {max_mp}")
+            p_pct = int(max(0.0, min(1.0, st.session_state.hp / float(max_hp))) * 100)
+            st.markdown(f"""
+            <div style="margin-bottom: 5px; font-size: 18px; font-weight: bold;">👤 {st.session_state.char_name} (플레이어)</div>
+            <div style="background-color: #e0e0e0; border-radius: 12px; height: 30px; width: 100%; overflow: hidden;">
+                <div style="background-color: #ff4b4b; width: {p_pct}%; height: 100%; text-align: center; color: white; font-weight: bold; line-height: 30px; font-size: 16px;">{st.session_state.hp} / {max_hp} ({p_pct}%)</div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.text(f"MP: {st.session_state.mp} / {max_mp}")
             
+        # 2. 적 HP 바 (푸른색 #1c83e1, 큼지막한 높이 30px)
         with col_c2:
-            st.write(f"**👹 {cm['name']} (적)**")
-            m_hp_ratio = max(0.0, min(1.0, cm['hp'] / float(cm['max_hp'])))
-            st.progress(m_hp_ratio)
-            st.text(f"HP: {cm['hp']} / {cm['max_hp']}")
+            m_pct = int(max(0.0, min(1.0, cm['hp'] / float(cm['max_hp']))) * 100)
+            st.markdown(f"""
+            <div style="margin-bottom: 5px; font-size: 18px; font-weight: bold;">👹 {cm['name']} (적)</div>
+            <div style="background-color: #e0e0e0; border-radius: 12px; height: 30px; width: 100%; overflow: hidden;">
+                <div style="background-color: #1c83e1; width: {m_pct}%; height: 100%; text-align: center; color: white; font-weight: bold; line-height: 30px; font-size: 16px;">{cm['hp']} / {cm['max_hp']} ({m_pct}%)</div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.text("")
             
         st.markdown("---")
         
-        # 화면 중앙 실시간 전투 계산 결과 강조 박스
-        st.markdown("### ⚡ 최근 전투 계산 결과")
-        st.info(st.session_state.last_combat_msg)
+        # ----------------- 큼지막하게 표시되는 최근 전투 계산 결과 박스 -----------------
+        st.markdown("### ⚡ 최근 전투 결과")
+        st.markdown(f"""
+        <div style="font-size: 22px; font-weight: bold; padding: 20px; background-color: #f0f2f6; color: #31333F; border-radius: 10px; text-align: center; border: 2px solid #d6d6d8;">
+            {st.session_state.last_combat_msg}
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("---")
         
         # 전투 턴 처리 (2초마다 교대 공격)
         if st.session_state.combat_turn == "player":
             c_class = st.session_state.char_class
             base_attack_power = total_atk
-            action_desc = "기본 공격"
             
             best_spell_dmg = 0
             best_spell_name = None
@@ -440,17 +452,12 @@ else:
             if best_spell_name and st.session_state.mp >= 5:
                 base_attack_power = best_spell_dmg
                 st.session_state.mp -= 5
-                action_desc = f"마법 [{best_spell_name}] (마나 5 소모)"
             
-            # 적의 회피 및 블록 확률 계산 (각 10%)
             m_evaded = random.random() < 0.10
             m_blocked = False
             if not m_evaded:
                 m_blocked = random.random() < 0.10
                 
-            evasion_str = "성공" if m_evaded else "실패"
-            block_str = "성공" if m_blocked else "실패"
-            
             if m_evaded:
                 dmg_to_m = 0
             elif m_blocked:
@@ -461,7 +468,8 @@ else:
                 
             cm['hp'] -= dmg_to_m
             
-            log_msg = f"⚔️ [플레이어 공격] {action_desc} | 공격 데미지: {base_attack_power} | 적 피해 데미지: {dmg_to_m} | 적 회피: {evasion_str} | 적 블록: {block_str}"
+            # 플레이어 공격 메시지 형식 적용 (적 피해 데미지만 표시)
+            log_msg = f"⚔️ [플레이어 공격] 적 피해 데미지: {dmg_to_m}"
             st.session_state.last_combat_msg = log_msg
             add_log(log_msg)
             
@@ -494,9 +502,6 @@ else:
             if not p_evaded:
                 p_blocked = random.random() < p_block_chance
                 
-            evasion_str = "성공" if p_evaded else "실패"
-            block_str = "성공" if p_blocked else "실패"
-            
             if p_evaded:
                 dmg_to_p = 0
             elif p_blocked:
@@ -507,7 +512,14 @@ else:
                 
             st.session_state.hp -= dmg_to_p
             
-            log_msg = f"💥 [적 공격] {cm['name']}의 공격 | 공격 데미지: {monster_atk} | 내 피해 데미지: {dmg_to_p} | 내 회피: {evasion_str} | 내 블록: {block_str}"
+            # 적 공격 메시지 조건부 형식 적용 (피해 데미지 / 회피 성공 / 블록 성공)
+            if p_evaded:
+                log_msg = "💨 회피 성공"
+            elif p_blocked:
+                log_msg = "🛡️ 블록 성공"
+            else:
+                log_msg = f"💥 [적 공격] {cm['name']}의 공격 내 피해 데미지: {dmg_to_p}"
+                
             st.session_state.last_combat_msg = log_msg
             add_log(log_msg)
             
