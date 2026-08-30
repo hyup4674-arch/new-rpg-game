@@ -22,41 +22,87 @@ def load_game_data():
 
 game_data = load_game_data()
 
-# 세션 상태 초기화 및 누락된 키 보정
+# 자동 저장 함수
+def save_game_state():
+    if st.session_state.get("game_started", False):
+        save_data = {
+            "game_started": st.session_state.game_started,
+            "char_name": st.session_state.char_name,
+            "char_class": st.session_state.char_class,
+            "stats": st.session_state.stats,
+            "hp": st.session_state.hp,
+            "max_hp": st.session_state.max_hp,
+            "mp": st.session_state.mp,
+            "max_mp": st.session_state.max_mp,
+            "gold": st.session_state.gold,
+            "companion": st.session_state.companion,
+            "in_combat": st.session_state.in_combat,
+            "combat_monster": st.session_state.combat_monster,
+            "combat_turn": st.session_state.combat_turn,
+            "last_combat_msg": st.session_state.last_combat_msg,
+            "player_double_damage": st.session_state.player_double_damage,
+            "equipped_weapon": st.session_state.equipped_weapon,
+            "equipped_armor": st.session_state.equipped_armor,
+            "equipped_shield": st.session_state.equipped_shield,
+            "inventory": st.session_state.inventory,
+            "item_inventory": st.session_state.item_inventory,
+            "logs": st.session_state.logs
+        }
+        try:
+            with open("autosave.json", "w", encoding="utf-8") as f:
+                json.dump(save_data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            pass
+
+# 세션 상태 초기화 및 자동 불러오기 (새로고침, 창 닫고 재접속 시 데이터 유지)
 if "initialized" not in st.session_state:
-    st.session_state.game_started = False
-    st.session_state.char_name = ""
-    st.session_state.char_class = ""
-    st.session_state.stats = {"str": 5, "dex": 5, "vit": 5, "int": 5}
-    st.session_state.bonus_points = 10
-    st.session_state.hp = 100
-    st.session_state.max_hp = 100
-    st.session_state.mp = 50
-    st.session_state.max_mp = 50
-    st.session_state.gold = 100
-    
-    # 동료 시스템 상태 (전투 횟수 제한 제거, 사망 시 소멸)
-    st.session_state.companion = None 
-    
-    # 전투 상태
-    st.session_state.in_combat = False
-    st.session_state.combat_monster = None
-    st.session_state.combat_turn = "player" # player -> companion -> monster
-    st.session_state.last_combat_msg = "⚔️ 사냥터에서 사냥을 시작하면 실시간 전투 계산 결과가 여기에 표시됩니다."
-    st.session_state.player_double_damage = False # 회피/블록 성공 후 다음 공격 데미지 2배 플래그
-    
-    # 장착 아이템
-    st.session_state.equipped_weapon = None
-    st.session_state.equipped_armor = None
-    st.session_state.equipped_shield = None
-    
-    # 인벤토리 (소모품 및 보유 아이템)
-    st.session_state.inventory = {"hp_potion": 2, "mp_potion": 2}
-    st.session_state.item_inventory = []
-    
-    # 게임 로그
-    st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
-    st.session_state.initialized = True
+    loaded_auto = False
+    if os.path.exists("autosave.json"):
+        try:
+            with open("autosave.json", "r", encoding="utf-8") as f:
+                auto_data = json.load(f)
+                if auto_data and auto_data.get("game_started", False):
+                    for k, v in auto_data.items():
+                        st.session_state[k] = v
+                    st.session_state["initialized"] = True
+                    loaded_auto = True
+        except Exception as e:
+            pass
+
+    if not loaded_auto:
+        st.session_state.game_started = False
+        st.session_state.char_name = ""
+        st.session_state.char_class = ""
+        st.session_state.stats = {"str": 5, "dex": 5, "vit": 5, "int": 5}
+        st.session_state.bonus_points = 10
+        st.session_state.hp = 100
+        st.session_state.max_hp = 100
+        st.session_state.mp = 50
+        st.session_state.max_mp = 50
+        st.session_state.gold = 100
+        
+        # 동료 시스템 상태 (전투 횟수 제한 제거, 사망 시 소멸)
+        st.session_state.companion = None 
+        
+        # 전투 상태
+        st.session_state.in_combat = False
+        st.session_state.combat_monster = None
+        st.session_state.combat_turn = "player"
+        st.session_state.last_combat_msg = "⚔️ 사냥터에서 사냥을 시작하면 실시간 전투 계산 결과가 여기에 표시됩니다."
+        st.session_state.player_double_damage = False
+        
+        # 장착 아이템
+        st.session_state.equipped_weapon = None
+        st.session_state.equipped_armor = None
+        st.session_state.equipped_shield = None
+        
+        # 인벤토리 (소모품 및 보유 아이템)
+        st.session_state.inventory = {"hp_potion": 2, "mp_potion": 2}
+        st.session_state.item_inventory = []
+        
+        # 게임 로그
+        st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
+        st.session_state.initialized = True
 else:
     if "item_inventory" not in st.session_state:
         st.session_state.item_inventory = []
@@ -77,6 +123,7 @@ def add_log(msg):
     st.session_state.logs.insert(0, msg)
     if len(st.session_state.logs) > 30:
         st.session_state.logs.pop()
+    save_game_state()
 
 # 능력치 계산 함수
 def get_derived_stats():
@@ -108,7 +155,6 @@ def get_derived_stats():
     
     return total_atk, total_def, max_hp, max_mp
 
-# 아이템 능력치 문자열 반환 헬퍼 함수 (좌측 사이드바 표시용)
 python_daggers = [
     "낡은 단검", "나무 뾰족검", "스틸레토", "쿠커리", "커스 대거", "크리스", "카타르", 
     "어쌔신 나이프", "섀도우 단검", "독니 단검", "블러드 스틸레토", "은장 단검", 
@@ -161,7 +207,6 @@ def process_auto_equip():
             elif cat == "armor": curr = st.session_state.equipped_armor
             elif cat == "shield": curr = st.session_state.equipped_shield
             
-            # 중복되는 장비(이미 착용 중인 장비와 이름이 같음)는 장착하지 않고 인벤토리에 남김
             if curr == itm:
                 continue
                 
@@ -235,8 +280,9 @@ def process_auto_equip():
                     if itm in st.session_state.item_inventory:
                         st.session_state.item_inventory.remove(itm)
                     add_log(f"✨ 동료 [{comp['name']}]이(가) 인벤토리에서 **{itm}**(을)를 자동 장착했습니다.")
+    save_game_state()
 
-# 아이템 드롭 및 인벤토리 추가 함수 (드롭율 50%)
+# 아이템 드롭 함수 (드롭율 50%)
 def handle_item_drop(m_atk, m_def):
     if random.random() >= 0.50:
         return 
@@ -264,7 +310,6 @@ def handle_item_drop(m_atk, m_def):
         st.session_state.item_inventory.append(dropped_item)
         process_auto_equip()
 
-# game_data 파일 유무 체크 경고
 if not game_data:
     st.error("⚠️ 루트 디렉토리에 `game_data.json` 파일이 존재하지 않거나 내용이 비어 있습니다.")
 
@@ -304,6 +349,19 @@ with st.sidebar:
             mime="application/json",
             use_container_width=True
         )
+        
+        st.markdown("---")
+        if st.button("🔄 캐릭터 초기화 (새로 시작)", type="secondary", use_container_width=True):
+            if os.path.exists("autosave.json"):
+                try:
+                    os.remove("autosave.json")
+                except:
+                    pass
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.success("게임이 초기화되었습니다. 새로 시작합니다.")
+            time.sleep(1)
+            st.rerun()
 
     st.markdown("---")
     uploaded_save_file = st.file_uploader("📂 저장 파일 불러오기", type=["json"])
@@ -313,6 +371,7 @@ with st.sidebar:
             for k, v in loaded_data.items():
                 st.session_state[k] = v
             st.session_state["initialized"] = True
+            save_game_state()
             st.success("🎉 게임 데이터를 성공적으로 불러왔습니다!")
             time.sleep(1)
             st.rerun()
@@ -395,6 +454,7 @@ if not st.session_state.game_started:
                     
                 st.session_state.game_started = True
                 add_log(f"[{char_name}] ({char_class}) 모험가가 탄생했습니다!")
+                save_game_state()
                 st.rerun()
 
 else:
@@ -472,6 +532,7 @@ else:
                         comp = st.session_state.companion
                         comp['hp'] = min(comp['max_hp'], comp['hp'] + 50)
                         add_log(f"동료 {comp['name']}에게 HP 포션을 사용했습니다.")
+                    save_game_state()
                     st.rerun()
                 else:
                     st.warning("HP 포션 부족!")
@@ -486,6 +547,7 @@ else:
                         comp = st.session_state.companion
                         comp['mp'] = min(comp['max_mp'], comp['mp'] + 30)
                         add_log(f"동료 {comp['name']}에게 MP 포션을 사용했습니다.")
+                    save_game_state()
                     st.rerun()
                 else:
                     st.warning("MP 포션 부족!")
@@ -568,7 +630,6 @@ else:
             if is_magic_attack or st.session_state.equipped_weapon in game_data.get("spells", {}):
                 dmg_to_m = max(1, int(dmg_to_m * 0.5))
                 
-            # 회피/블록 성공으로 인한 다음 공격 2배 적용 여부 확인
             double_msg = ""
             if st.session_state.player_double_damage:
                 dmg_to_m *= 2
@@ -587,6 +648,7 @@ else:
                 st.session_state.gold += cm['atk'] * 5
                 st.session_state.in_combat = False
                 handle_item_drop(cm['atk'], cm['def'])
+                save_game_state()
                 time.sleep(1)
                 st.rerun()
             else:
@@ -594,6 +656,7 @@ else:
                     st.session_state.combat_turn = "companion"
                 else:
                     st.session_state.combat_turn = "monster"
+                save_game_state()
                 time.sleep(2)
                 st.rerun()
                 
@@ -601,6 +664,7 @@ else:
             comp = st.session_state.companion
             if not comp or comp['hp'] <= 0:
                 st.session_state.combat_turn = "monster"
+                save_game_state()
                 st.rerun()
             else:
                 c_stats = comp['stats']
@@ -636,10 +700,12 @@ else:
                     st.session_state.gold += cm['atk'] * 5
                     st.session_state.in_combat = False
                     handle_item_drop(cm['atk'], cm['def'])
+                    save_game_state()
                     time.sleep(1)
                     st.rerun()
                 else:
                     st.session_state.combat_turn = "monster"
+                    save_game_state()
                     time.sleep(2)
                     st.rerun()
                 
@@ -690,12 +756,12 @@ else:
                 add_log(log_msg)
                 
                 if comp['hp'] <= 0:
-                    # 동료가 사망하면 착용하고 있던 모든 장비가 함께 사라짐 (companion 객체 해제)
                     death_msg = f"💀 동료 [{comp['name']}]이(가) 전투 중 사망하여 쓰러졌습니다... 착용하고 있던 장비들과 함께 사라집니다."
                     add_log(death_msg)
                     st.session_state.companion = None
                 
                 st.session_state.combat_turn = "player"
+                save_game_state()
                 time.sleep(2)
                 st.rerun()
                 
@@ -719,7 +785,6 @@ else:
                     
                 st.session_state.hp -= dmg_to_p
                 
-                # 플레이어 회피/블록 성공 시 더 큰 글자 메시지 및 "적이 중심을 잃었습니다" 효과 적용
                 if p_evaded:
                     st.session_state.player_double_damage = True
                     big_msg = "<h1 style='color: #00e1ff; text-align: center;'>💨 플레이어 회피성공!</h1><h3 style='text-align: center; color: #ffeb3b;'>적이 중심을 잃었습니다! (다음 플레이어 공격 데미지 2배 ⚡)</h3>"
@@ -745,10 +810,12 @@ else:
                     st.session_state.equipped_armor = None
                     st.session_state.equipped_shield = None
                     st.session_state.in_combat = False
+                    save_game_state()
                     time.sleep(1)
                     st.rerun()
                 else:
                     st.session_state.combat_turn = "player"
+                    save_game_state()
                     time.sleep(2)
                     st.rerun()
 
@@ -791,6 +858,7 @@ else:
                             start_msg = f"야생의 **{m_name}** (공격력:{m_data['attack']}, 방어력:{m_data['defense']}, HP:{m_data['hp']}) 출현!"
                             st.session_state.last_combat_msg = start_msg
                             add_log(start_msg)
+                            save_game_state()
                             st.rerun()
 
         with tab2:
@@ -803,6 +871,7 @@ else:
                         st.session_state.gold -= 30
                         st.session_state.inventory["hp_potion"] += 1
                         add_log("HP 포션 구매 완료")
+                        save_game_state()
                         st.rerun()
                     else:
                         st.warning("골드 부족!")
@@ -813,6 +882,7 @@ else:
                         st.session_state.gold -= 25
                         st.session_state.inventory["mp_potion"] += 1
                         add_log("MP 포션 구매 완료")
+                        save_game_state()
                         st.rerun()
                     else:
                         st.warning("골드 부족!")
@@ -829,6 +899,7 @@ else:
                         st.session_state.companion['hp'] = st.session_state.companion['max_hp']
                         st.session_state.companion['mp'] = st.session_state.companion['max_mp']
                     add_log("여관에서 휴식하여 HP와 MP가 모두 회복되었습니다.")
+                    save_game_state()
                     st.rerun()
                 else:
                     st.warning("여관비(50 G)가 부족합니다!")
@@ -865,7 +936,6 @@ else:
                     c_max_hp = 50 + (c_stats["vit"] * 10)
                     c_max_mp = 30 + (c_stats["int"] * 8)
                     
-                    # 새로 고용하는 동료는 장비가 없는 기본 상태로 시작
                     st.session_state.companion = {
                         "name": c_name,
                         "type": c_type,
@@ -879,10 +949,9 @@ else:
                         "equipped_shield": None
                     }
                     
-                    # 고용 후 인벤토리에 착용 가능한 장비가 있다면 자동 장착 시도
                     process_auto_equip()
-                    
                     add_log(f"🤝 든든한 동료 [{c_name}](을)를 기본 상태로 고용했습니다! (사망할 때까지 함께합니다)")
+                    save_game_state()
                     st.rerun()
 
     st.markdown("---")
