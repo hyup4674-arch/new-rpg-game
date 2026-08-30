@@ -17,7 +17,7 @@ def load_game_data():
 
 game_data = load_game_data()
 
-# 세션 상태 초기화
+# 세션 상태 초기화 및 누락된 키 보정
 if "initialized" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.char_name = ""
@@ -47,6 +47,16 @@ if "initialized" not in st.session_state:
     # 게임 로그
     st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
     st.session_state.initialized = True
+else:
+    # 이미 생성된 세션에 새로 추가된 상태값이 없을 경우 안전하게 기본값 부여
+    if "item_inventory" not in st.session_state:
+        st.session_state.item_inventory = []
+    if "in_combat" not in st.session_state:
+        st.session_state.in_combat = False
+    if "combat_monster" not in st.session_state:
+        st.session_state.combat_monster = None
+    if "combat_turn" not in st.session_state:
+        st.session_state.combat_turn = "player"
 
 def add_log(msg):
     st.session_state.logs.insert(0, msg)
@@ -400,7 +410,7 @@ else:
 
     else:
         # 평상시 탭 화면 (사냥터, 상점, 여관)
-        tab1, tab2, tab3 = tab1, tab2, tab3 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관"])
+        tab1, tab2, tab3 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관"])
         
         with tab1:
             st.subheader("사냥터 선택")
