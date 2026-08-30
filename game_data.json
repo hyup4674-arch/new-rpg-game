@@ -265,58 +265,56 @@
       "is_shield": false
     }
   },
- {
-  "나무 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 30
-  },
-  "가죽 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 31
-  },
-  "동 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 32
-  },
-  "철제 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 33
-  },
-  "강철 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 34
-  },
-  "기사 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 35
-  },
-  "미스릴 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 36
-  },
-  "티타늄 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 37
-  },
-  "드래곤 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 38
-  },
-  "신성한 방패": {
-    "requires_vit": 12,
-    "is_shield": true,
-    "block_rate": 40
-  }
-}
+  "shields": {
+    "나무 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 30
+    },
+    "가죽 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 31
+    },
+    "동 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 32
+    },
+    "철제 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 33
+    },
+    "강철 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 34
+    },
+    "기사 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 35
+    },
+    "미스릴 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 36
+    },
+    "티타늄 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 37
+    },
+    "드래곤 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 38
+    },
+    "신성한 방패": {
+      "requires_vit": 12,
+      "is_shield": true,
+      "block_rate": 40
     }
   },
   "spells": {
