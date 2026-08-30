@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import random
 import os
+import time
 
 # 페이지 설정
 st.set_page_config(page_title="AI 텍스트 RPG", page_icon="⚔️", layout="wide")
@@ -29,13 +30,19 @@ if "initialized" not in st.session_state:
     st.session_state.max_mp = 50
     st.session_state.gold = 100
     
+    # 전투 상태
+    st.session_state.in_combat = False
+    st.session_state.combat_monster = None
+    st.session_state.combat_turn = "player"
+    
     # 장착 아이템
     st.session_state.equipped_weapon = None
     st.session_state.equipped_armor = None
     st.session_state.equipped_shield = None
     
-    # 인벤토리 (소모품 등)
+    # 인벤토리 (소모품 및 보유 아이템)
     st.session_state.inventory = {"hp_potion": 2, "mp_potion": 2}
+    st.session_state.item_inventory = []
     
     # 게임 로그
     st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
@@ -49,17 +56,14 @@ def add_log(msg):
 # 능력치 계산 함수
 def get_derived_stats():
     s = st.session_state.stats
-    # 기본 공격력 = 힘 + 무기 공격력 (또는 마법 기본 데미지)
     weapon_atk = 0
     if st.session_state.equipped_weapon:
         w_name = st.session_state.equipped_weapon
-        # 무기인지 마법인지 확인
         if w_name in game_data.get("weapons", {}):
             weapon_atk = game_data["weapons"][w_name]["attack"]
         elif w_name in game_data.get("spells", {}):
             weapon_atk = game_data["spells"][w_name]["base_damage"] + s["int"] // 2
             
-    # 방어력 = 민첩/2 + 갑옷 방어력 + 방패 방어력
     armor_def = 0
     if st.session_state.equipped_armor:
         a_name = st.session_state.equipped_armor
@@ -79,6 +83,91 @@ def get_derived_stats():
     
     return total_atk, total_def, max_hp, max_mp
 
+# 아이템 드롭 및 자동 장착/보관 처리 함수
+def handle_item_drop(m_atk, m_def):
+    drop_type = random.choice(["weapon_or_spell", "armor_or_shield"])
+    dropped_item = None
+    item_category = ""
+    item_val = 0
+    
+    if drop_type == "weapon_or_spell":
+        candidates = []
+        for w_n, w_d in game_data.get("weapons", {}).items():
+            if w_d["attack"] == m_atk:
+                candidates.append((w_n, "weapon", w_d["attack"]))
+        for sp_n, sp_d in game_data.get("spells", {}).items():
+            if sp_d["base_damage"] == m_atk:
+                candidates.append((sp_n, "spell", sp_d["base_damage"]))
+        if candidates:
+            dropped_item, item_category, item_val = random.choice(candidates)
+    else:
+        candidates = []
+        for a_n, a_d in game_data.get("armors", {}).items():
+            if a_d["defense"] == m_def:
+                candidates.append((a_n, "armor", a_d["defense"]))
+        for sh_n, sh_d in game_data.get("shields", {}).items():
+            if sh_d["defense"] == m_def:
+                candidates.append((sh_n, "shield", sh_d["defense"]))
+        if candidates:
+            dropped_item, item_category, item_val = random.choice(candidates)
+            
+    if dropped_item:
+        add_log(f"🎁 필드 드롭 아이템 발견: **{dropped_item}**!")
+        c_class = st.session_state.char_class
+        can_equip = False
+        
+        is_dagger = any(dropped_item.startswith(d) for d in [
+            "낡은 단검", "나무 뾰족검", "스틸레토", "쿠커리", "커스 대거", "크리스", "카타르", 
+            "어쌔신 나이프", "섀도우 단검", "독니 단검", "블러드 스틸레토", "은장 단검", 
+            "룬 대거", "팬텀 나이프", "미스릴 대거", "티타늄 단검", "드래곤 이빨", "월광의 단검", "전설의 암살검", "신성한 스틸레토"
+        ])
+        
+        if item_category in ["weapon", "spell"]:
+            if c_class == "전사" and dropped_item in game_data.get("weapons", {}) and not is_dagger:
+                can_equip = True
+            elif c_class == "암살자" and is_dagger:
+                can_equip = True
+            elif c_class == "마법사" and dropped_item in game_data.get("spells", {}):
+                can_equip = True
+        elif item_category == "armor":
+            can_equip = True
+        elif item_category == "shield":
+            if c_class == "전사":
+                can_equip = True
+                
+        if can_equip:
+            current_item = None
+            current_val = 0
+            if item_category in ["weapon", "spell"]:
+                current_item = st.session_state.equipped_weapon
+                if current_item in game_data.get("weapons", {}):
+                    current_val = game_data["weapons"][current_item]["attack"]
+                elif current_item in game_data.get("spells", {}):
+                    current_val = game_data["spells"][current_item]["base_damage"]
+            elif item_category == "armor":
+                current_item = st.session_state.equipped_armor
+                if current_item in game_data.get("armors", {}):
+                    current_val = game_data["armors"][current_item]["defense"]
+            elif item_category == "shield":
+                current_item = st.session_state.equipped_shield
+                if current_item in game_data.get("shields", {}):
+                    current_val = game_data["shields"][current_item]["defense"]
+                    
+            if item_val > current_val:
+                if item_category in ["weapon", "spell"]:
+                    st.session_state.equipped_weapon = dropped_item
+                elif item_category == "armor":
+                    st.session_state.equipped_armor = dropped_item
+                elif item_category == "shield":
+                    st.session_state.equipped_shield = dropped_item
+                add_log(f"✨ 더 뛰어난 성능! **{dropped_item}**(을)를 자동 장착했습니다.")
+            else:
+                st.session_state.item_inventory.append(dropped_item)
+                add_log(f"📦 {dropped_item}을(를) 인벤토리에 보관했습니다.")
+        else:
+            st.session_state.item_inventory.append(dropped_item)
+            add_log(f"📦 직업 제한으로 장착할 수 없어 {dropped_item}을(를) 인벤토리에 보관했습니다.")
+
 # ----------------- UI: 캐릭터 생성 화면 -----------------
 if not st.session_state.game_started:
     st.title("⚔️ AI 텍스트 RPG: 모험의 시작")
@@ -90,25 +179,20 @@ if not st.session_state.game_started:
         char_class = st.selectbox("직업 선택", ["전사", "암살자", "마법사"])
         
         st.markdown("---")
-        st.subheader("스탯 분배 (기본 각 5, 남은 포인트: {})".format(st.session_state.bonus_points))
+        st.subheader("스탯 분배 (기본 각 5점)")
         
-        # 스탯 분배 슬라이더/인풋 관리
-        # 임시 상태 저장
         if "alloc" not in st.session_state:
             st.session_state.alloc = {"str": 0, "dex": 0, "vit": 0, "int": 0}
             
-        total_allocated = sum(st.session_state.alloc.values())
-        remaining = 10 - total_allocated
-        
-        st.write(f"남은 보너스 포인트: **{remaining}**")
-        
         s_str = st.slider("힘 (STR)", 0, 10, st.session_state.alloc["str"], key="s_str_slider")
         s_dex = st.slider("민첩 (DEX)", 0, 10, st.session_state.alloc["dex"], key="s_dex_slider")
         s_vit = st.slider("체력 (VIT)", 0, 10, st.session_state.alloc["vit"], key="s_vit_slider")
         s_int = st.slider("지능 (INT)", 0, 10, st.session_state.alloc["int"], key="s_int_slider")
         
-        # 슬라이더 값 합계 검증
         current_sum = s_str + s_dex + s_vit + s_int
+        remaining = 10 - current_sum
+        st.write(f"남은 보너스 포인트: **{remaining}** / 10")
+        
         if current_sum <= 10:
             st.session_state.alloc["str"] = s_str
             st.session_state.alloc["dex"] = s_dex
@@ -144,7 +228,6 @@ if not st.session_state.game_started:
                     "int": 5 + st.session_state.alloc["int"]
                 }
                 
-                # 최초 장비 지급
                 _, _, max_hp, max_mp = get_derived_stats()
                 st.session_state.max_hp = max_hp
                 st.session_state.hp = max_hp
@@ -178,7 +261,7 @@ else:
         st.caption(f"직업: **{st.session_state.char_class}**")
         st.markdown("---")
         
-        st.subheader("📊 능력치")
+        st.subheader("📊 스탯")
         st.text(f"힘 (STR): {st.session_state.stats['str']}")
         st.text(f"민첩 (DEX): {st.session_state.stats['dex']}")
         st.text(f"체력 (VIT): {st.session_state.stats['vit']}")
@@ -198,9 +281,16 @@ else:
         st.text(f"방패: {st.session_state.equipped_shield or '없음'}")
         
         st.markdown("---")
-        st.subheader("🧪 보유 포션")
+        st.subheader("🧪 인벤토리")
         st.text(f"HP 포션: {st.session_state.inventory['hp_potion']}개")
         st.text(f"MP 포션: {st.session_state.inventory['mp_potion']}개")
+        
+        if st.session_state.item_inventory:
+            st.write("**보유 중인 추가 장비:**")
+            for itm in st.session_state.item_inventory:
+                st.text(f"- {itm}")
+        else:
+            st.text("보유 중인 추가 장비 없음")
         
         col_p1, col_p2 = st.columns(2)
         with col_p1:
@@ -208,218 +298,178 @@ else:
                 if st.session_state.inventory['hp_potion'] > 0:
                     st.session_state.inventory['hp_potion'] -= 1
                     st.session_state.hp = min(max_hp, st.session_state.hp + 50)
-                    add_log("HP 포션을 사용하여 체력을 50 회복했습니다.")
+                    add_log("HP 포션을 사용하여 체력을 회복했습니다.")
                     st.rerun()
                 else:
-                    st.warning("HP 포션이 부족합니다!")
+                    st.warning("HP 포션 부족!")
         with col_p2:
             if st.button("MP 포션 사용"):
                 if st.session_state.inventory['mp_potion'] > 0:
                     st.session_state.inventory['mp_potion'] -= 1
                     st.session_state.mp = min(max_mp, st.session_state.mp + 30)
-                    add_log("MP 포션을 사용하여 마나를 30 회복했습니다.")
+                    add_log("MP 포션을 사용하여 마나를 회복했습니다.")
                     st.rerun()
                 else:
-                    st.warning("MP 포션이 부족합니다!")
+                    st.warning("MP 포션 부족!")
 
-    # 메인 화면 구성
+    # 메인 화면
     st.title("🗺️ 텍스트 RPG 세계관")
     
-    # 상단 탭 (사냥터, 상점, 여관)
-    tab1, tab2, tab3 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관"])
-    
-    with tab1:
-        st.subheader("사냥터 선택")
-        h_grounds = game_data.get("hunting_grounds", {})
-        selected_hg = st.selectbox("사냥터를 선택하세요", list(h_grounds.keys()))
+    # 전투 중일 때의 화면
+    if st.session_state.in_combat:
+        st.subheader("⚔️ 실시간 전투 진행 중...")
+        cm = st.session_state.combat_monster
         
-        if selected_hg:
-            hg_info = h_grounds[selected_hg]
-            st.info(f"**설명:** {hg_info['desc']} (몬스터 공격력 범위: {hg_info['min_atk']} ~ {hg_info['max_atk']})")
+        # 좌우 HP 바 표시
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            st.write(f"**👤 {st.session_state.char_name} (플레이어)**")
+            hp_ratio = max(0.0, min(1.0, st.session_state.hp / float(max_hp)))
+            st.progress(hp_ratio)
+            st.text(f"HP: {st.session_state.hp} / {max_hp} | MP: {st.session_state.mp} / {max_mp}")
             
-            if st.button("⚔️ 사냥 시작!", type="primary"):
-                # 해당 공격력 범위 내의 몬스터 필터링
-                monsters = game_data.get("monsters", {})
-                valid_monsters = []
-                for m_name, m_data in monsters.items():
-                    if hg_info['min_atk'] <= m_data['attack'] <= hg_info['max_atk']:
-                        valid_monsters.append((m_name, m_data))
+        with col_c2:
+            st.write(f"**👹 {cm['name']} (적)**")
+            m_hp_ratio = max(0.0, min(1.0, cm['hp'] / float(cm['max_hp'])))
+            st.progress(m_hp_ratio)
+            st.text(f"HP: {cm['hp']} / {cm['max_hp']}")
+            
+        st.markdown("---")
+        
+        # 자동 턴 처리 (4초 간격)
+        if st.session_state.combat_turn == "player":
+            # 플레이어 턴: 가장 강력한 공격 또는 마법 사용 (마법은 MP 5 소모)
+            c_class = st.session_state.char_class
+            best_dmg = total_atk
+            action_desc = "기본 공격"
+            
+            # 마법사 또는 마법 보유 시 가장 강한 마법 탐색
+            best_spell_dmg = 0
+            best_spell_name = None
+            for sp_n, sp_d in game_data.get("spells", {}).items():
+                if c_class == "마법사" or st.session_state.equipped_weapon == sp_n:
+                    s_dmg = sp_d["base_damage"] + (st.session_state.stats["int"] // 2)
+                    if s_dmg > best_spell_dmg:
+                        best_spell_dmg = s_dmg
+                        best_spell_name = sp_n
+            
+            if best_spell_name and st.session_state.mp >= 5:
+                best_dmg = best_spell_dmg
+                st.session_state.mp -= 5
+                action_desc = f"마법 [{best_spell_name}] (MP -5)"
+            
+            dmg_to_m = max(1, best_dmg - cm['def'] + random.randint(-2, 2))
+            cm['hp'] -= dmg_to_m
+            add_log(f"⚔️ {st.session_state.char_name}의 {action_desc}! -> {cm['name']}에게 {dmg_to_m} 데미지!")
+            
+            if cm['hp'] <= 0:
+                add_log(f"🎉 **{cm['name']}** 처치 성공! (+{cm['atk'] * 5} 골드)")
+                st.session_state.gold += cm['atk'] * 5
+                st.session_state.in_combat = False
                 
-                if valid_monsters:
-                    m_name, m_data = random.choice(valid_monsters)
-                    m_atk = m_data['attack']
-                    m_def = m_data['defense']
-                    m_hp = m_data['hp']
-                    m_max_hp = m_hp
+                # 10% 확률 아이템 드롭
+                if random.random() < 0.10:
+                    handle_item_drop(cm['atk'], cm['def'])
                     
-                    add_log(f" 야생의 **{m_name}** (공격력:{m_atk}, 방어력:{m_def}, HP:{m_hp})과(와) 전투를 시작합니다!")
-                    
-                    # 전투 시뮬레이션
-                    battle_log = []
-                    turn = 1
-                    while m_hp > 0 and st.session_state.hp > 0:
-                        # 플레이어 공격
-                        dmg_to_m = max(1, total_atk - m_def + random.randint(-2, 2))
-                        m_hp -= dmg_to_m
-                        
-                        if m_hp <= 0:
-                            battle_log.append(f"턴 {turn}: 플레이어의 공격! {m_name}에게 {dmg_to_m}의 피해를 입혔습니다. ({m_name} 처치!)")
-                            break
-                        
-                        # 몬스터 반격
-                        dmg_to_p = max(1, m_atk - total_def + random.randint(-1, 1))
-                        st.session_state.hp -= dmg_to_p
-                        
-                        battle_log.append(f"턴 {turn}: 플레이어 공격({dmg_to_m} 피해) ➔ {m_name} 반격({dmg_to_p} 피해). 잔여 HP: {max(0, st.session_state.hp)}/{max_hp}")
-                        
-                        if st.session_state.hp <= 0:
-                            break
-                        turn += 1
-                        if turn > 50: # 무한루프 방지
-                            break
-                            
-                    for l in battle_log:
-                        add_log(l)
-                        
-                    # 전투 결과 처리
-                    if st.session_state.hp <= 0:
-                        add_log(f"💀 사망하셨습니다... 마을로 부활합니다. (모든 장착 장비 소실!)")
-                        st.session_state.hp = max_hp
-                        st.session_state.mp = max_mp
-                        st.session_state.equipped_weapon = None
-                        st.session_state.equipped_armor = None
-                        st.session_state.equipped_shield = None
-                        st.rerun()
-                    else:
-                        add_log(f"🎉 **{m_name}** 처치 성공! 승리하였습니다!")
-                        st.session_state.gold += m_atk * 5
-                        
-                        # 아이템 드롭 체크 (5% 확률)
-                        if random.random() < 0.05:
-                            # 1개만 드롭: 무기/마법 (공격력 == m_atk) 또는 방패/갑옷 (방어력 == m_def)
-                            drop_type = random.choice(["weapon_or_spell", "armor_or_shield"])
-                            dropped_item = None
-                            item_category = ""
-                            
-                            if drop_type == "weapon_or_spell":
-                                # 한손무기, 양손무기, 단검, 마법 중 m_atk와 일치하는 것 탐색
-                                candidates = []
-                                for w_n, w_d in game_data.get("weapons", {}).items():
-                                    if w_d["attack"] == m_atk:
-                                        candidates.append((w_n, "weapon"))
-                                for sp_n, sp_d in game_data.get("spells", {}).items():
-                                    if sp_d["base_damage"] == m_atk:
-                                        candidates.append((sp_n, "spell"))
-                                if candidates:
-                                    dropped_item, item_category = random.choice(candidates)
-                            else:
-                                # 방패, 갑옷 중 m_def와 일치하는 것 탐색
-                                candidates = []
-                                for a_n, a_d in game_data.get("armors", {}).items():
-                                    if a_d["defense"] == m_def:
-                                        candidates.append((a_n, "armor"))
-                                for sh_n, sh_d in game_data.get("shields", {}).items():
-                                    if sh_d["defense"] == m_def:
-                                        candidates.append((sh_n, "shield"))
-                                if candidates:
-                                    dropped_item, item_category = random.choice(candidates)
-                                    
-                            if dropped_item:
-                                add_log(f"🎁 희귀 아이템 드롭 발견: **{dropped_item}**!")
-                                
-                                # 직업별 착용 제한 검증 및 자동 획득(착용)
-                                c_class = st.session_state.char_class
-                                can_equip = False
-                                
-                                if item_category in ["weapon", "spell"]:
-                                    if c_class == "전사":
-                                        # 전사: 한손무기, 양손무기 착용 가능 (단검, 마법 불가)
-                                        if dropped_item in game_data.get("weapons", {}):
-                                            # 한손/양손 구분 (양손무기 리스트에 있거나 단검이 아니면)
-                                            is_dagger = any(dropped_item.startswith(d_prefix) for d_prefix in ["낡은 단검", "나무 뾰족검", "스틸레토", "쿠커리", "커스 대거", "크리스", "카타르", "어쌔신 나이프", "섀도우 단검", "독니 단검", "블러드 스틸레토", "은장 단검", "룬 대거", "팬텀 나이프", "미스릴 대거", "티타늄 단검", "드래곤 이빨", "월광의 단검", "전설의 암살검", "신성한 스틸레토"])
-                                            if not is_dagger:
-                                                can_equip = True
-                                    elif c_class == "암살자":
-                                        # 암살자: 단검만 착용 가능
-                                        if dropped_item in game_data.get("weapons", {}):
-                                            is_dagger = any(dropped_item.startswith(d_prefix) for d_prefix in ["낡은 단검", "나무 뾰족검", "스틸레토", "쿠커리", "커스 대거", "크리스", "카타르", "어쌔신 나이프", "섀도우 단검", "독니 단검", "블러드 스틸레토", "은장 단검", "룬 대거", "팬텀 나이프", "미스릴 대거", "티타늄 단검", "드래곤 이빨", "월광의 단검", "전설의 암살검", "신성한 스틸레토"])
-                                            if is_dagger:
-                                                can_equip = True
-                                    elif c_class == "마법사":
-                                        # 마법사: 마법만 사용 가능
-                                        if dropped_item in game_data.get("spells", {}):
-                                            can_equip = True
-                                            
-                                elif item_category == "armor":
-                                    # 갑옷은 모든 직업 착용 가능
-                                    can_equip = True
-                                    
-                                elif item_category == "shield":
-                                    # 방패는 전사만 착용 가능 (암살자, 마법사 불가)
-                                    if c_class == "전사":
-                                        can_equip = True
-                                        
-                                if can_equip:
-                                    if item_category in ["weapon", "spell"]:
-                                        st.session_state.equipped_weapon = dropped_item
-                                        add_log(f"✨ 직업에 적합하여 무기/마법 **{dropped_item}**(을)를 자동 장착했습니다!")
-                                    elif item_category == "armor":
-                                        st.session_state.equipped_armor = dropped_item
-                                        add_log(f"✨ 갑옷 **{dropped_item}**(을)를 자동 장착했습니다!")
-                                    elif item_category == "shield":
-                                        st.session_state.equipped_shield = dropped_item
-                                        add_log(f"✨ 방패 **{dropped_item}**(을)를 자동 장착했습니다!")
-                                else:
-                                    add_log(f"⚠️ 직업({c_class}) 제한에 맞지 않아 획득한 아이템({dropped_item})을 장착할 수 없습니다.")
-                        st.rerun()
-
-    with tab2:
-        st.subheader("🛒 잡화 상점")
-        st.markdown("모험에 필요한 포션을 구입할 수 있습니다.")
-        
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            st.write("### HP 포션 (회복 50)")
-            st.write("가격: **30 G**")
-            if st.button("HP 포션 구매"):
-                if st.session_state.gold >= 30:
-                    st.session_state.gold -= 30
-                    st.session_state.inventory["hp_potion"] += 1
-                    add_log("HP 포션을 1개 구입했습니다.")
-                    st.rerun()
-                else:
-                    st.warning("골드가 부족합니다!")
-                    
-        with col_s2:
-            st.write("### MP 포션 (회복 30)")
-            st.write("가격: **25 G**")
-            if st.button("MP 포션 구매"):
-                if st.session_state.gold >= 25:
-                    st.session_state.gold -= 25
-                    st.session_state.inventory["mp_potion"] += 1
-                    add_log("MP 포션을 1개 구입했습니다.")
-                    st.rerun()
-                else:
-                    st.warning("골드가 부족합니다!")
-
-    with tab3:
-        st.subheader("🏨 모험가의 여관")
-        st.markdown("여관에서 피로를 풀고 체력과 마나를 완벽하게 회복하세요.")
-        st.write("이용 요금: **50 G**")
-        
-        if st.button("여관에서 휴식하기", type="primary"):
-            if st.session_state.gold >= 50:
-                st.session_state.gold -= 50
-                st.session_state.hp = max_hp
-                st.session_state.mp = max_mp
-                add_log("여관에서 편안하게 휴식을 취해 HP와 MP가 모두 회복되었습니다!")
+                time.sleep(1)
                 st.rerun()
             else:
-                st.warning("여관비를 지불할 골드가 부족합니다! (필요: 50 G)")
+                st.session_state.combat_turn = "monster"
+                time.sleep(4)
+                st.rerun()
+                
+        elif st.session_state.combat_turn == "monster":
+            dmg_to_p = max(1, cm['atk'] - total_def + random.randint(-1, 1))
+            st.session_state.hp -= dmg_to_p
+            add_log(f"💥 {cm['name']}의 공격! -> {st.session_state.char_name}에게 {dmg_to_p} 데미지!")
+            
+            if st.session_state.hp <= 0:
+                add_log("💀 전투에서 패배하여 사망했습니다... 마을로 부활합니다. (착용 중인 모든 장비 소실!)")
+                st.session_state.hp = max_hp
+                st.session_state.mp = max_mp
+                st.session_state.equipped_weapon = None
+                st.session_state.equipped_armor = None
+                st.session_state.equipped_shield = None
+                st.session_state.in_combat = False
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.session_state.combat_turn = "player"
+                time.sleep(4)
+                st.rerun()
 
-    # 하단 실시간 게임 로그 표시
+    else:
+        # 평상시 탭 화면 (사냥터, 상점, 여관)
+        tab1, tab2, tab3 = tab1, tab2, tab3 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관"])
+        
+        with tab1:
+            st.subheader("사냥터 선택")
+            h_grounds = game_data.get("hunting_grounds", {})
+            selected_hg = st.selectbox("사냥터를 선택하세요", list(h_grounds.keys()))
+            
+            if selected_hg:
+                hg_info = h_grounds[selected_hg]
+                st.info(f"**설명:** {hg_info['desc']} (몬스터 공격력: {hg_info['min_atk']} ~ {hg_info['max_atk']})")
+                
+                if st.button("⚔️ 사냥 시작!", type="primary"):
+                    monsters = game_data.get("monsters", {})
+                    valid_monsters = [
+                        (m_name, m_data) for m_name, m_data in monsters.items() 
+                        if hg_info['min_atk'] <= m_data['attack'] <= hg_info['max_atk']
+                    ]
+                    
+                    if valid_monsters:
+                        m_name, m_data = random.choice(valid_monsters)
+                        st.session_state.combat_monster = {
+                            "name": m_name,
+                            "hp": m_data['hp'],
+                            "max_hp": m_data['hp'],
+                            "atk": m_data['attack'],
+                            "def": m_data['defense']
+                        }
+                        st.session_state.combat_turn = "player"
+                        st.session_state.in_combat = True
+                        add_log(f" 야생의 **{m_name}** (공격력:{m_data['attack']}, 방어력:{m_data['defense']}, HP:{m_data['hp']}) 출현!")
+                        st.rerun()
+
+        with tab2:
+            st.subheader("🛒 잡화 상점")
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                st.write("### HP 포션 (30 G)")
+                if st.button("HP 포션 구매"):
+                    if st.session_state.gold >= 30:
+                        st.session_state.gold -= 30
+                        st.session_state.inventory["hp_potion"] += 1
+                        add_log("HP 포션 구매 완료")
+                        st.rerun()
+                    else:
+                        st.warning("골드 부족!")
+            with col_s2:
+                st.write("### MP 포션 (25 G)")
+                if st.button("MP 포션 구매"):
+                    if st.session_state.gold >= 25:
+                        st.session_state.gold -= 25
+                        st.session_state.inventory["mp_potion"] += 1
+                        add_log("MP 포션 구매 완료")
+                        st.rerun()
+                    else:
+                        st.warning("골드 부족!")
+
+        with tab3:
+            st.subheader("🏨 여관")
+            st.write("이용 요금: **50 G** (체력 및 마나 완전 회복)")
+            if st.button("여관에서 휴식하기", type="primary"):
+                if st.session_state.gold >= 50:
+                    st.session_state.gold -= 50
+                    st.session_state.hp = max_hp
+                    st.session_state.mp = max_mp
+                    add_log("여관에서 휴식하여 HP와 MP가 모두 회복되었습니다.")
+                    st.rerun()
+                else:
+                    st.warning("여관비(50 G)가 부족합니다!")
+
     st.markdown("---")
     st.subheader("📜 실시간 모험 기록")
     for log in st.session_state.logs:
         st.text(log)
-
