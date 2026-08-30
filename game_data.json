@@ -422,252 +422,252 @@
   },
   "monsters": {
     "슬라임 (1)": {
-      "attack": 3,
+      "attack": 6,
       "defense": 1,
       "hp": 40
     },
     "새끼 늑대 (2)": {
-      "attack": 6,
+      "attack": 12,
       "defense": 2,
       "hp": 43
     },
     "고블린 (3)": {
-      "attack": 9,
+      "attack": 18,
       "defense": 3,
       "hp": 46
     },
     "코볼트 (4)": {
-      "attack": 12,
+      "attack": 24,
       "defense": 4,
       "hp": 49
     },
     "좀비 (5)": {
-      "attack": 15,
+      "attack": 30,
       "defense": 5,
       "hp": 53
     },
     "스켈레톤 (6)": {
-      "attack": 18,
+      "attack": 36,
       "defense": 6,
       "hp": 56
     },
     "왕지렁이 (7)": {
-      "attack": 21,
+      "attack": 42,
       "defense": 7,
       "hp": 59
     },
     "들쥐 (8)": {
-      "attack": 24,
+      "attack": 48,
       "defense": 8,
       "hp": 62
     },
     "박쥐 (9)": {
-      "attack": 27,
+      "attack": 54,
       "defense": 9,
       "hp": 66
     },
     "도적 (10)": {
-      "attack": 30,
+      "attack": 60,
       "defense": 10,
       "hp": 69
     },
     "오크 (11)": {
-      "attack": 33,
+      "attack": 66,
       "defense": 11,
       "hp": 72
     },
     "하피 (12)": {
-      "attack": 36,
+      "attack": 72,
       "defense": 12,
       "hp": 75
     },
     "트롤 (13)": {
-      "attack": 39,
+      "attack": 78,
       "defense": 13,
       "hp": 79
     },
     "구울 (14)": {
-      "attack": 42,
+      "attack": 84,
       "defense": 14,
       "hp": 82
     },
     "미노타우로스 (15)": {
-      "attack": 45,
+      "attack": 90,
       "defense": 15,
       "hp": 85
     },
     "리저드맨 (16)": {
-      "attack": 48,
+      "attack": 96,
       "defense": 16,
       "hp": 88
     },
     "오거 (17)": {
-      "attack": 51,
+      "attack": 102,
       "defense": 17,
       "hp": 92
     },
     "사이클롭스 (18)": {
-      "attack": 54,
+      "attack": 108,
       "defense": 18,
       "hp": 95
     },
     "와이트 (19)": {
-      "attack": 57,
+      "attack": 114,
       "defense": 19,
       "hp": 98
     },
     "다크 엘프 (20)": {
-      "attack": 60,
+      "attack": 120,
       "defense": 20,
       "hp": 102
     },
     "골렘 (21)": {
-      "attack": 63,
+      "attack": 126,
       "defense": 21,
       "hp": 105
     },
     "그리폰 (22)": {
-      "attack": 66,
+      "attack": 132,
       "defense": 22,
       "hp": 108
     },
     "와이번 (23)": {
-      "attack": 69,
+      "attack": 138,
       "defense": 23,
       "hp": 111
     },
     "키메라 (24)": {
-      "attack": 72,
+      "attack": 144,
       "defense": 24,
       "hp": 115
     },
     "만티코어 (25)": {
-      "attack": 75,
+      "attack": 150,
       "defense": 25,
       "hp": 118
     },
     "데스 나이트 (26)": {
-      "attack": 78,
+      "attack": 156,
       "defense": 26,
       "hp": 121
     },
     "뱀파이어 (27)": {
-      "attack": 81,
+      "attack": 162,
       "defense": 27,
       "hp": 124
     },
     "리치 (28)": {
-      "attack": 84,
+      "attack": 168,
       "defense": 28,
       "hp": 128
     },
     "베히모스 (29)": {
-      "attack": 87,
+      "attack": 174,
       "defense": 29,
       "hp": 131
     },
     "드래곤 (30)": {
-      "attack": 90,
+      "attack": 180,
       "defense": 30,
       "hp": 134
     },
     "지옥견 (31)": {
-      "attack": 93,
+      "attack": 186,
       "defense": 31,
       "hp": 137
     },
     "흑마법사 (32)": {
-      "attack": 96,
+      "attack": 192,
       "defense": 32,
       "hp": 141
     },
     "사막 전갈 (33)": {
-      "attack": 99,
+      "attack": 198,
       "defense": 33,
       "hp": 144
     },
     "늪지 괴물 (34)": {
-      "attack": 102,
+      "attack": 204,
       "defense": 34,
       "hp": 147
     },
     "설인 (35)": {
-      "attack": 105,
+      "attack": 210,
       "defense": 35,
       "hp": 151
     },
     "화염 정령 (36)": {
-      "attack": 108,
+      "attack": 216,
       "defense": 36,
       "hp": 154
     },
     "얼음 정령 (37)": {
-      "attack": 111,
+      "attack": 222,
       "defense": 37,
       "hp": 157
     },
     "폭풍의 정령 (38)": {
-      "attack": 114,
+      "attack": 228,
       "defense": 38,
       "hp": 160
     },
     "대지 정령 (39)": {
-      "attack": 117,
+      "attack": 234,
       "defense": 39,
       "hp": 164
     },
     "심연의 추적자 (40)": {
-      "attack": 120,
+      "attack": 240,
       "defense": 40,
       "hp": 167
     },
     "타락한 기사 (41)": {
-      "attack": 123,
+      "attack": 246,
       "defense": 41,
       "hp": 170
     },
     "광폭한 오거 (42)": {
-      "attack": 126,
+      "attack": 252,
       "defense": 42,
       "hp": 173
     },
     "서리 거인 (43)": {
-      "attack": 129,
+      "attack": 258,
       "defense": 43,
       "hp": 177
     },
     "화산 드레이크 (44)": {
-      "attack": 132,
+      "attack": 264,
       "defense": 44,
       "hp": 180
     },
     "철갑 고블린 (45)": {
-      "attack": 135,
+      "attack": 270,
       "defense": 45,
       "hp": 183
     },
     "섀도우 비스트 (46)": {
-      "attack": 138,
+      "attack": 276,
       "defense": 46,
       "hp": 186
     },
     "블러드 서커 (47)": {
-      "attack": 141,
+      "attack": 282,
       "defense": 47,
       "hp": 190
     },
     "네크로맨서 (48)": {
-      "attack": 144,
+      "attack": 288,
       "defense": 48,
       "hp": 193
     },
     "고대 가디언 (49)": {
-      "attack": 147,
+      "attack": 294,
       "defense": 49,
       "hp": 196
     },
     "마왕 (50)": {
-      "attack": 150,
+      "attack": 300,
       "defense": 50,
       "hp": 200
     }
