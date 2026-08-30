@@ -265,66 +265,58 @@
       "is_shield": false
     }
   },
-  "shields": {
-    "나무 방패": {
-      "defense": 1,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 1
-    },
-    "가죽 방패": {
-      "defense": 2,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 2
-    },
-    "동 방패": {
-      "defense": 3,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 3
-    },
-    "철제 방패": {
-      "defense": 4,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 4
-    },
-    "강철 방패": {
-      "defense": 5,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 5
-    },
-    "기사 방패": {
-      "defense": 6,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 6
-    },
-    "미스릴 방패": {
-      "defense": 7,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 7
-    },
-    "티타늄 방패": {
-      "defense": 8,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 8
-    },
-    "드래곤 방패": {
-      "defense": 9,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 9
-    },
-    "신성한 방패": {
-      "defense": 10,
-      "requires_vit": 12,
-      "is_shield": true,
-      "block_bonus": 10
+ {
+  "나무 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 30
+  },
+  "가죽 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 31
+  },
+  "동 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 32
+  },
+  "철제 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 33
+  },
+  "강철 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 34
+  },
+  "기사 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 35
+  },
+  "미스릴 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 36
+  },
+  "티타늄 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 37
+  },
+  "드래곤 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 38
+  },
+  "신성한 방패": {
+    "requires_vit": 12,
+    "is_shield": true,
+    "block_rate": 40
+  }
+}
     }
   },
   "spells": {
