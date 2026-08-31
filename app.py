@@ -64,7 +64,8 @@ def save_game_state():
             "inventory": st.session_state.inventory,
             "item_inventory": st.session_state.item_inventory,
             "logs": st.session_state.logs,
-            "last_mp_regen_time": st.session_state.last_mp_regen_time
+            "last_mp_regen_time": st.session_state.last_mp_regen_time,
+            "quests": st.session_state.quests
         }
         try:
             with open("autosave.json", "w", encoding="utf-8") as f:
@@ -91,6 +92,12 @@ if "initialized" not in st.session_state:
                         st.session_state.stat_points = 0
                     if "last_mp_regen_time" not in st.session_state:
                         st.session_state.last_mp_regen_time = time.time()
+                    if "quests" not in st.session_state:
+                        st.session_state.quests = {
+                            "blacksmith": {"status": "available", "progress": 0, "target": 3},
+                            "armor_maker": {"status": "available", "progress": 0, "target": 3},
+                            "mage_disciple": {"status": "available", "progress": 0, "target": 3}
+                        }
                     st.session_state["initialized"] = True
                     loaded_auto = True
         except Exception as e:
@@ -126,6 +133,11 @@ if "initialized" not in st.session_state:
         st.session_state.inventory = {"hp_potion": 2, "mp_potion": 2}
         st.session_state.item_inventory = []
         st.session_state.last_mp_regen_time = time.time()
+        st.session_state.quests = {
+            "blacksmith": {"status": "available", "progress": 0, "target": 3},
+            "armor_maker": {"status": "available", "progress": 0, "target": 3},
+            "mage_disciple": {"status": "available", "progress": 0, "target": 3}
+        }
         
         st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
         st.session_state.initialized = True
@@ -151,6 +163,12 @@ else:
         st.session_state.stat_points = 0
     if "last_mp_regen_time" not in st.session_state:
         st.session_state.last_mp_regen_time = time.time()
+    if "quests" not in st.session_state:
+        st.session_state.quests = {
+            "blacksmith": {"status": "available", "progress": 0, "target": 3},
+            "armor_maker": {"status": "available", "progress": 0, "target": 3},
+            "mage_disciple": {"status": "available", "progress": 0, "target": 3}
+        }
 
 def add_log(msg):
     st.session_state.logs.insert(0, msg)
@@ -215,7 +233,7 @@ def get_companion_derived_stats(comp):
     max_mp = 30 + (stats["int"] * 8)
     return total_atk, total_def, max_hp, max_mp
 
-# 마나 자동 회복 함수 (5초에 1씩 일괄 적용, 맥스면 회복 안 함)
+# 마나 자동 회복 함수
 def check_and_apply_mp_regen():
     now = time.time()
     elapsed = now - st.session_state.last_mp_regen_time
@@ -261,7 +279,6 @@ def add_exp(exp_amount):
         st.session_state.max_mp = max_mp
         st.session_state.mp = max_mp
 
-# 아이템 카테고리 및 능력치 텍스트 헬퍼
 ITEM_CATEGORY_SLOTS = {
     "weapons": "weapon",
     "daggers": "weapon",
@@ -328,6 +345,60 @@ def get_item_requirements(item_name):
             if val >= 10:
                 min_vit = val // 2
     return min_str, min_vit
+
+# 현재 장착 중인 장비보다 한 단계 더 좋은 아이템을 동적으로 선정하는 함수
+def get_dynamic_quest_reward(quest_id):
+    target_categories = []
+    if quest_id == "blacksmith":
+        target_categories = ["weapons", "daggers"]
+    elif quest_id == "armor_maker":
+        target_categories = ["armors", "shields"]
+    elif quest_id == "mage_disciple":
+        target_categories = ["spells"]
+    else:
+        return "강철 대검"
+
+    current_max_val = 0
+    
+    # 플레이어 장착 아이템 확인
+    eqs = [st.session_state.get("equipped_weapon"), st.session_state.get("equipped_armor"), st.session_state.get("equipped_shield")]
+    for eq in eqs:
+        if eq and get_item_category(eq) in target_categories:
+            val = get_item_value(eq)
+            if val > current_max_val:
+                current_max_val = val
+                
+    # 동료 장착 아이템 확인
+    for comp in st.session_state.get("companions", []):
+        c_eqs = [comp.get("equipped_weapon"), comp.get("equipped_armor"), comp.get("equipped_shield")]
+        for eq in c_eqs:
+            if eq and get_item_category(eq) in target_categories:
+                val = get_item_value(eq)
+                if val > current_max_val:
+                    current_max_val = val
+
+    # 해당 카테고리의 모든 아이템 수집 및 (이름, 가치) 정렬
+    all_candidate_items = []
+    for cat in target_categories:
+        cat_dict = game_data.get(cat, {})
+        for item_name in cat_dict.keys():
+            val = get_item_value(item_name)
+            all_candidate_items.append((item_name, val))
+            
+    if not all_candidate_items:
+        return "강철 대검"
+        
+    all_candidate_items.sort(key=lambda x: x[1])
+    
+    # 현재 착용 중인 최고 수치보다 더 높은 능력치를 가진 아이템들 필터링
+    better_items = [item for item, val in all_candidate_items if val > current_max_val]
+    
+    if better_items:
+        # 그중 가장 값이 낮은(현재 장비 바로 다음 단계인) 아이템 선택
+        return better_items[0]
+    else:
+        # 이미 최상급 장비를 착용하고 있다면 해당 카테고리 중 가장 좋은 아이템 반환
+        return all_candidate_items[-1][0]
 
 def can_equip(char_class, item_name, stats=None):
     cat = get_item_category(item_name)
@@ -409,7 +480,7 @@ def process_auto_equip():
             if is_ok:
                 curr = None
                 if slot == "weapon": curr = comp["equipped_weapon"]
-                elif slot == "armor": curr = comp["equipped_armor"]
+                elif slot == "armor": comp["equipped_armor"]
                 elif slot == "shield": comp["equipped_shield"]
                 
                 if curr == itm:
@@ -492,7 +563,8 @@ with st.sidebar:
             "inventory": st.session_state.inventory,
             "item_inventory": st.session_state.item_inventory,
             "logs": st.session_state.logs,
-            "last_mp_regen_time": st.session_state.last_mp_regen_time
+            "last_mp_regen_time": st.session_state.last_mp_regen_time,
+            "quests": st.session_state.quests
         }
         json_bytes = json.dumps(save_data, ensure_ascii=False, indent=4).encode("utf-8")
         st.download_button(
@@ -532,6 +604,12 @@ with st.sidebar:
                 st.session_state.stat_points = 0
             if "last_mp_regen_time" not in st.session_state:
                 st.session_state.last_mp_regen_time = time.time()
+            if "quests" not in st.session_state:
+                st.session_state.quests = {
+                    "blacksmith": {"status": "available", "progress": 0, "target": 3},
+                    "armor_maker": {"status": "available", "progress": 0, "target": 3},
+                    "mage_disciple": {"status": "available", "progress": 0, "target": 3}
+                }
             st.session_state["initialized"] = True
             save_game_state()
             st.success("🎉 게임 데이터를 성공적으로 불러왔습니다!")
@@ -600,6 +678,11 @@ if not st.session_state.game_started:
                 st.session_state.max_exp = 100
                 st.session_state.stat_points = 0
                 st.session_state.companions = []
+                st.session_state.quests = {
+                    "blacksmith": {"status": "available", "progress": 0, "target": 3},
+                    "armor_maker": {"status": "available", "progress": 0, "target": 3},
+                    "mage_disciple": {"status": "available", "progress": 0, "target": 3}
+                }
                 
                 _, _, max_hp, max_mp = get_derived_stats()
                 st.session_state.max_hp = max_hp
@@ -626,7 +709,6 @@ if not st.session_state.game_started:
                 st.rerun()
 
 else:
-    # 턴 시작 전 마나 자동 회복 체크
     check_and_apply_mp_regen()
     process_auto_equip()
     total_atk, total_def, max_hp, max_mp = get_derived_stats()
@@ -799,7 +881,7 @@ else:
                                     curr = None
                                     if slot == "weapon": curr = comp["equipped_weapon"]
                                     elif slot == "armor": curr = comp["equipped_armor"]
-                                    elif slot == "shield": comp["equipped_shield"]
+                                    elif slot == "shield": curr = comp["equipped_shield"]
                                     
                                     if slot == "weapon": comp["equipped_weapon"] = itm
                                     elif slot == "armor": comp["equipped_armor"] = itm
@@ -962,6 +1044,14 @@ else:
                 st.session_state.gold += gold_reward
                 add_exp(exp_reward)
                 st.session_state.in_combat = False
+                
+                for q_key, q_val in st.session_state.quests.items():
+                    if q_val["status"] == "in_progress":
+                        q_val["progress"] += 1
+                        if q_val["progress"] >= q_val["target"]:
+                            q_val["status"] = "ready_to_complete"
+                            add_log(f"📜 퀘스트 완료 가능! 마을 주민에게 돌아가 보상을 받으세요.")
+
                 handle_item_drop(cm['atk'], cm['def'])
                 save_game_state()
                 time.sleep(1)
@@ -1075,6 +1165,14 @@ else:
                         st.session_state.gold += gold_reward
                         add_exp(exp_reward)
                         st.session_state.in_combat = False
+                        
+                        for q_key, q_val in st.session_state.quests.items():
+                            if q_val["status"] == "in_progress":
+                                q_val["progress"] += 1
+                                if q_val["progress"] >= q_val["target"]:
+                                    q_val["status"] = "ready_to_complete"
+                                    add_log(f"📜 퀘스트 완료 가능! 마을 주민에게 돌아가 보상을 받으세요.")
+
                         handle_item_drop(cm['atk'], cm['def'])
                         save_game_state()
                         time.sleep(1)
@@ -1090,34 +1188,12 @@ else:
                 
         elif turn == "monster":
             monster_atk = cm['atk']
-            
-            # --- [전사 우선 타겟팅 로직 추가부] ---
-            valid_targets = []
-            if st.session_state.hp > 0:
-                valid_targets.append({
-                    "type": "player", 
-                    "name": st.session_state.char_name, 
-                    "class": st.session_state.char_class
-                })
+            valid_targets = [{"type": "player", "name": st.session_state.char_name}]
             for comp in st.session_state.companions:
                 if comp['hp'] > 0 and comp['type'] != "힐러":
-                    valid_targets.append({
-                        "type": "companion", 
-                        "obj": comp, 
-                        "name": comp['name'], 
-                        "class": comp['type']
-                    })
+                    valid_targets.append({"type": "companion", "obj": comp, "name": comp['name']})
             
-            # 전사 클래스가 존재하는지 필터링
-            warrior_targets = [t for t in valid_targets if t.get("class") == "전사"]
-            
-            if warrior_targets:
-                # 전사가 있다면 전사들 중 무작위로 우선 공격
-                chosen_target = random.choice(warrior_targets)
-            else:
-                # 전사가 없거나 죽었으면 생존한 전체 대상 중 랜덤 공격
-                chosen_target = random.choice(valid_targets)
-            # ---------------------------------------------
+            chosen_target = random.choice(valid_targets)
             
             if chosen_target["type"] == "companion":
                 comp = chosen_target["obj"]
@@ -1188,7 +1264,7 @@ else:
                     log_text = "적이 플레이어를 공격했으나 회피했습니다 (적 중심 상실! 다음 공격 데미지 2배)"
                 elif p_blocked:
                     st.session_state.player_double_damage = True
-                    log_text = f"적이 플레이어를 공격하여 블록 성공, {dmg_to_p} 의 데미지를 입었습니다 (적 중심 상실!)"
+                    log_text = f"적이 플레이어를 공격하여 블록 성공, {dmg_to_p} 의 데미지를 입혔습니다 (적 중심 상실!)"
                 else:
                     log_text = f"적이 플레이어를 공격하여 {dmg_to_p} 의 데미지를 입혔습니다"
                     
@@ -1215,7 +1291,7 @@ else:
                     st.rerun()
 
     else:
-        tab1, tab2, tab3 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관"])
+        tab1, tab2, tab3, tab4 = st.tabs(["🌲 사냥터", "🛒 상점", "🏨 여관", "💬 마을 주민 (퀘스트)"])
         
         with tab1:
             st.subheader("사냥터 선택")
@@ -1364,6 +1440,75 @@ else:
                     add_log(f"🤝 든든한 동료 [{c_name}](을)를 고용했습니다!")
                     save_game_state()
                     st.rerun()
+
+        with tab4:
+            st.subheader("💬 마을 주민과 대화 및 퀘스트")
+            st.write("마을 주민들과 대화하여 현재 장착 중인 장비보다 한 단계 더 우수한 장비를 획득하세요!")
+            st.markdown("---")
+
+            quests_info = [
+                {
+                    "id": "blacksmith",
+                    "npc": "대장장이 '벌칸'",
+                    "desc": "무기 업그레이드 퀘스트",
+                    "dialogue": "\"이봐 모험가! 요즘 숲의 몬스터들이 사나워져서 더 강력한 무기를 손에 넣어야 버틸 수 있을 거야. 사냥터에서 몬스터 3마리를 소탕하고 증거를 가져와 주게!\"",
+                    "target": 3
+                },
+                {
+                    "id": "armor_maker",
+                    "npc": "방어구 장인 '엘레나'",
+                    "desc": "방어구 업그레이드 퀘스트",
+                    "dialogue": "\"어머, 모험가님! 칼바람 부는 숲을 탐험하려면 지금보다 튼튼한 방어구가 필수예요. 괴물 3마리를 처치하고 재료를 모아오시면 제 명예를 걸고 만든 상급 방어구를 드려요.\"",
+                    "target": 3
+                },
+                {
+                    "id": "mage_disciple",
+                    "npc": "마법사의 제자 '로이'",
+                    "desc": "상급 마법 전수 퀘스트",
+                    "dialogue": "\"오오, 마력의 흐름이 느껴지는군요! 지금보다 더 강력한 상급 마법을 배우고 싶으신가요? 마물 3마리를 물리치고 그 마력 파편을 모아오시면 전수해 드릴게요!\"",
+                    "target": 3
+                }
+            ]
+
+            for q in quests_info:
+                q_id = q["id"]
+                q_state = st.session_state.quests.get(q_id, {"status": "available", "progress": 0})
+                
+                # 현재 상태를 기준으로 동적 보상 아이템 미리 계산
+                dynamic_reward = get_dynamic_quest_reward(q_id)
+                
+                st.markdown(f"### 🛡️ [{q['npc']}] - {q['desc']}")
+                st.info(q["dialogue"])
+                st.write(f"🎁 **현재 예상 보상:** `{dynamic_reward}` ({get_item_stat_text(dynamic_reward, '')})")
+                
+                status = q_state["status"]
+                prog = q_state["progress"]
+                target = q["target"]
+
+                if status == "available":
+                    st.write(f"상태: 퀘스트 수락 가능 (진행도: 0 / {target})")
+                    if st.button(f"퀘스트 수락하기 ({q['npc']})", key=f"accept_{q_id}"):
+                        st.session_state.quests[q_id]["status"] = "in_progress"
+                        st.session_state.quests[q_id]["progress"] = 0
+                        add_log(f"📜 [{q['npc']}]의 퀘스트를 수락했습니다. (목표: 몬스터 {target}마리 처치)")
+                        save_game_state()
+                        st.rerun()
+                elif status == "in_progress":
+                    st.write(f"상태: 퀘스트 진행 중... (진행도: {prog} / {target})")
+                    st.progress(min(1.0, prog / target))
+                elif status == "ready_to_complete":
+                    st.write(f"상태: **완료 가능!** (보상: {dynamic_reward})")
+                    if st.button(f"🎁 보상 받기 ({dynamic_reward})", key=f"reward_{q_id}", type="primary"):
+                        st.session_state.quests[q_id]["status"] = "completed"
+                        st.session_state.item_inventory.append(dynamic_reward)
+                        process_auto_equip()
+                        add_log(f"🎉 퀘스트 완료! [{q['npc']}]로부터 **{dynamic_reward}**(을)를 획득했습니다!")
+                        save_game_state()
+                        st.rerun()
+                elif status == "completed":
+                    st.success(f"✅ 이미 완료한 퀘스트입니다. (획득 보상: {dynamic_reward})")
+                
+                st.markdown("---")
 
     st.markdown("---")
     st.subheader("📜 실시간 모험 기록")
