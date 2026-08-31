@@ -892,7 +892,7 @@ else:
                 """, unsafe_allow_html=True)
                 
         with cols[-1]:
-            m_pct = int(max(0.0, min(1.0, cm['hp'] / float(cm['max_hp'])) * 100)
+            m_pct = int(max(0.0, min(1.0, cm['hp'] / float(cm['max_hp'])) * 100))
             st.markdown(f"""
             <div style="margin-bottom: 5px; font-size: 15px; font-weight: bold;">👹 {cm['name']}</div>
             <div style="background-color: #e0e0e0; border-radius: 12px; height: 26px; width: 100%; overflow: hidden;">
