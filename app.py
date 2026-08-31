@@ -21,6 +21,54 @@ def load_game_data():
 
 game_data = load_game_data()
 
+# 기본 퀘스트 데이터 정의 및 외부 파일(quests.json) 자동 생성/로드 함수
+DEFAULT_QUEST_DATA = [
+    {
+        "id": "q_theft",
+        "title": "마을 창고 도난 사건",
+        "description": "마을 식량 창고의 물품이 사라졌다. 주민들을 심문하고 범인을 밝혀내자.",
+        "culprit": "경비병",
+        "threshold": 12,
+        "npcs": {
+            "창고 관리인": "\"밤사이에 문이 열려 있었어... 누군가 의도적으로 열고 들어간 게 분명해.\"",
+            "경비병": "\"난 밤사이에 성문 교대 근무를 서고 있었다고. 내겐 알리바이가 있어.\"",
+            "상인": "\"어제 저녁에 창고 근처를 서성이는 누군가를 본 것 같기도 한데... 기분 탓인가?\""
+        }
+    },
+    {
+        "id": "q_secret",
+        "title": "사라진 마도서의 비밀",
+        "description": "마법사의 탑에서 강력한 마도서가 도둑맞았다. 범인을 추궁하고 진실을 밝혀내자.",
+        "culprit": "마법사의 제자",
+        "threshold": 14,
+        "npcs": {
+            "마법사": "\"내 평생의 연구가 담긴 마도서야! 제자 녀석이 요즘 눈을 반짝이던데...\"",
+            "마법사의 제자": "\"스승님, 저를 의심하시는 거예요? 저는 연구실을 지키고 있었어요!\"",
+            "주민": "\"밤중에 탑 꼭대기에서 푸른 빛이 번쩍이는 걸 봤어요.\""
+        }
+    }
+]
+
+def create_quest_file():
+    if not os.path.exists("quests.json"):
+        try:
+            with open("quests.json", "w", encoding="utf-8") as f:
+                json.dump(DEFAULT_QUEST_DATA, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            pass
+
+def load_quests():
+    create_quest_file()
+    if os.path.exists("quests.json"):
+        try:
+            with open("quests.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if data:
+                    return data
+        except Exception as e:
+            pass
+    return DEFAULT_QUEST_DATA
+
 # 설정값 단축 참조
 SETTINGS = game_data.get("settings", {
     "combat_delay": 3,
@@ -65,7 +113,8 @@ def save_game_state():
             "item_inventory": st.session_state.item_inventory,
             "logs": st.session_state.logs,
             "last_mp_regen_time": st.session_state.last_mp_regen_time,
-            "quests": st.session_state.quests
+            "current_quest": st.session_state.current_quest,
+            "quest_status": st.session_state.quest_status
         }
         try:
             with open("autosave.json", "w", encoding="utf-8") as f:
@@ -92,12 +141,10 @@ if "initialized" not in st.session_state:
                         st.session_state.stat_points = 0
                     if "last_mp_regen_time" not in st.session_state:
                         st.session_state.last_mp_regen_time = time.time()
-                    if "quests" not in st.session_state:
-                        st.session_state.quests = {
-                            "blacksmith": {"status": "available", "progress": 0, "target": 3},
-                            "armor_maker": {"status": "available", "progress": 0, "target": 3},
-                            "mage_disciple": {"status": "available", "progress": 0, "target": 3}
-                        }
+                    if "current_quest" not in st.session_state:
+                        all_q = load_quests()
+                        st.session_state.current_quest = random.choice(all_q)
+                        st.session_state.quest_status = "not_started"
                     st.session_state["initialized"] = True
                     loaded_auto = True
         except Exception as e:
@@ -133,11 +180,10 @@ if "initialized" not in st.session_state:
         st.session_state.inventory = {"hp_potion": 2, "mp_potion": 2}
         st.session_state.item_inventory = []
         st.session_state.last_mp_regen_time = time.time()
-        st.session_state.quests = {
-            "blacksmith": {"status": "available", "progress": 0, "target": 3},
-            "armor_maker": {"status": "available", "progress": 0, "target": 3},
-            "mage_disciple": {"status": "available", "progress": 0, "target": 3}
-        }
+        
+        all_q = load_quests()
+        st.session_state.current_quest = random.choice(all_q)
+        st.session_state.quest_status = "not_started"
         
         st.session_state.logs = ["모험의 세계에 오신 것을 환영합니다! 캐릭터를 생성해주세요."]
         st.session_state.initialized = True
@@ -163,12 +209,10 @@ else:
         st.session_state.stat_points = 0
     if "last_mp_regen_time" not in st.session_state:
         st.session_state.last_mp_regen_time = time.time()
-    if "quests" not in st.session_state:
-        st.session_state.quests = {
-            "blacksmith": {"status": "available", "progress": 0, "target": 3},
-            "armor_maker": {"status": "available", "progress": 0, "target": 3},
-            "mage_disciple": {"status": "available", "progress": 0, "target": 3}
-        }
+    if "current_quest" not in st.session_state:
+        all_q = load_quests()
+        st.session_state.current_quest = random.choice(all_q)
+        st.session_state.quest_status = "not_started"
 
 def add_log(msg):
     st.session_state.logs.insert(0, msg)
@@ -346,60 +390,6 @@ def get_item_requirements(item_name):
                 min_vit = val // 2
     return min_str, min_vit
 
-# 현재 장착 중인 장비보다 한 단계 더 좋은 아이템을 동적으로 선정하는 함수
-def get_dynamic_quest_reward(quest_id):
-    target_categories = []
-    if quest_id == "blacksmith":
-        target_categories = ["weapons", "daggers"]
-    elif quest_id == "armor_maker":
-        target_categories = ["armors", "shields"]
-    elif quest_id == "mage_disciple":
-        target_categories = ["spells"]
-    else:
-        return "강철 대검"
-
-    current_max_val = 0
-    
-    # 플레이어 장착 아이템 확인
-    eqs = [st.session_state.get("equipped_weapon"), st.session_state.get("equipped_armor"), st.session_state.get("equipped_shield")]
-    for eq in eqs:
-        if eq and get_item_category(eq) in target_categories:
-            val = get_item_value(eq)
-            if val > current_max_val:
-                current_max_val = val
-                
-    # 동료 장착 아이템 확인
-    for comp in st.session_state.get("companions", []):
-        c_eqs = [comp.get("equipped_weapon"), comp.get("equipped_armor"), comp.get("equipped_shield")]
-        for eq in c_eqs:
-            if eq and get_item_category(eq) in target_categories:
-                val = get_item_value(eq)
-                if val > current_max_val:
-                    current_max_val = val
-
-    # 해당 카테고리의 모든 아이템 수집 및 (이름, 가치) 정렬
-    all_candidate_items = []
-    for cat in target_categories:
-        cat_dict = game_data.get(cat, {})
-        for item_name in cat_dict.keys():
-            val = get_item_value(item_name)
-            all_candidate_items.append((item_name, val))
-            
-    if not all_candidate_items:
-        return "강철 대검"
-        
-    all_candidate_items.sort(key=lambda x: x[1])
-    
-    # 현재 착용 중인 최고 수치보다 더 높은 능력치를 가진 아이템들 필터링
-    better_items = [item for item, val in all_candidate_items if val > current_max_val]
-    
-    if better_items:
-        # 그중 가장 값이 낮은(현재 장비 바로 다음 단계인) 아이템 선택
-        return better_items[0]
-    else:
-        # 이미 최상급 장비를 착용하고 있다면 해당 카테고리 중 가장 좋은 아이템 반환
-        return all_candidate_items[-1][0]
-
 def can_equip(char_class, item_name, stats=None):
     cat = get_item_category(item_name)
     if not cat: return False, None, "존재하지 않는 아이템입니다."
@@ -564,7 +554,8 @@ with st.sidebar:
             "item_inventory": st.session_state.item_inventory,
             "logs": st.session_state.logs,
             "last_mp_regen_time": st.session_state.last_mp_regen_time,
-            "quests": st.session_state.quests
+            "current_quest": st.session_state.current_quest,
+            "quest_status": st.session_state.quest_status
         }
         json_bytes = json.dumps(save_data, ensure_ascii=False, indent=4).encode("utf-8")
         st.download_button(
@@ -604,12 +595,10 @@ with st.sidebar:
                 st.session_state.stat_points = 0
             if "last_mp_regen_time" not in st.session_state:
                 st.session_state.last_mp_regen_time = time.time()
-            if "quests" not in st.session_state:
-                st.session_state.quests = {
-                    "blacksmith": {"status": "available", "progress": 0, "target": 3},
-                    "armor_maker": {"status": "available", "progress": 0, "target": 3},
-                    "mage_disciple": {"status": "available", "progress": 0, "target": 3}
-                }
+            if "current_quest" not in st.session_state:
+                all_q = load_quests()
+                st.session_state.current_quest = random.choice(all_q)
+                st.session_state.quest_status = "not_started"
             st.session_state["initialized"] = True
             save_game_state()
             st.success("🎉 게임 데이터를 성공적으로 불러왔습니다!")
@@ -678,11 +667,10 @@ if not st.session_state.game_started:
                 st.session_state.max_exp = 100
                 st.session_state.stat_points = 0
                 st.session_state.companions = []
-                st.session_state.quests = {
-                    "blacksmith": {"status": "available", "progress": 0, "target": 3},
-                    "armor_maker": {"status": "available", "progress": 0, "target": 3},
-                    "mage_disciple": {"status": "available", "progress": 0, "target": 3}
-                }
+                
+                all_q = load_quests()
+                st.session_state.current_quest = random.choice(all_q)
+                st.session_state.quest_status = "not_started"
                 
                 _, _, max_hp, max_mp = get_derived_stats()
                 st.session_state.max_hp = max_hp
@@ -1044,13 +1032,6 @@ else:
                 st.session_state.gold += gold_reward
                 add_exp(exp_reward)
                 st.session_state.in_combat = False
-                
-                for q_key, q_val in st.session_state.quests.items():
-                    if q_val["status"] == "in_progress":
-                        q_val["progress"] += 1
-                        if q_val["progress"] >= q_val["target"]:
-                            q_val["status"] = "ready_to_complete"
-                            add_log(f"📜 퀘스트 완료 가능! 마을 주민에게 돌아가 보상을 받으세요.")
 
                 handle_item_drop(cm['atk'], cm['def'])
                 save_game_state()
@@ -1165,13 +1146,6 @@ else:
                         st.session_state.gold += gold_reward
                         add_exp(exp_reward)
                         st.session_state.in_combat = False
-                        
-                        for q_key, q_val in st.session_state.quests.items():
-                            if q_val["status"] == "in_progress":
-                                q_val["progress"] += 1
-                                if q_val["progress"] >= q_val["target"]:
-                                    q_val["status"] = "ready_to_complete"
-                                    add_log(f"📜 퀘스트 완료 가능! 마을 주민에게 돌아가 보상을 받으세요.")
 
                         handle_item_drop(cm['atk'], cm['def'])
                         save_game_state()
@@ -1442,73 +1416,68 @@ else:
                     st.rerun()
 
         with tab4:
-            st.subheader("💬 마을 주민과 대화 및 퀘스트")
-            st.write("마을 주민들과 대화하여 현재 장착 중인 장비보다 한 단계 더 우수한 장비를 획득하세요!")
+            st.subheader("💬 마을 주민과 추리 퀘스트")
+            st.write("외부 파일에서 무작위로 로드된 퀘스트를 진행하고 주민들의 증언을 바탕으로 범인을 밝혀내세요!")
             st.markdown("---")
 
-            quests_info = [
-                {
-                    "id": "blacksmith",
-                    "npc": "대장장이 '벌칸'",
-                    "desc": "무기 업그레이드 퀘스트",
-                    "dialogue": "\"이봐 모험가! 요즘 숲의 몬스터들이 사나워져서 더 강력한 무기를 손에 넣어야 버틸 수 있을 거야. 사냥터에서 몬스터 3마리를 소탕하고 증거를 가져와 주게!\"",
-                    "target": 3
-                },
-                {
-                    "id": "armor_maker",
-                    "npc": "방어구 장인 '엘레나'",
-                    "desc": "방어구 업그레이드 퀘스트",
-                    "dialogue": "\"어머, 모험가님! 칼바람 부는 숲을 탐험하려면 지금보다 튼튼한 방어구가 필수예요. 괴물 3마리를 처치하고 재료를 모아오시면 제 명예를 걸고 만든 상급 방어구를 드려요.\"",
-                    "target": 3
-                },
-                {
-                    "id": "mage_disciple",
-                    "npc": "마법사의 제자 '로이'",
-                    "desc": "상급 마법 전수 퀘스트",
-                    "dialogue": "\"오오, 마력의 흐름이 느껴지는군요! 지금보다 더 강력한 상급 마법을 배우고 싶으신가요? 마물 3마리를 물리치고 그 마력 파편을 모아오시면 전수해 드릴게요!\"",
-                    "target": 3
-                }
-            ]
+            if "current_quest" not in st.session_state or not st.session_state.current_quest:
+                all_q = load_quests()
+                st.session_state.current_quest = random.choice(all_q)
+                st.session_state.quest_status = "not_started"
 
-            for q in quests_info:
-                q_id = q["id"]
-                q_state = st.session_state.quests.get(q_id, {"status": "available", "progress": 0})
-                
-                # 현재 상태를 기준으로 동적 보상 아이템 미리 계산
-                dynamic_reward = get_dynamic_quest_reward(q_id)
-                
-                st.markdown(f"### 🛡️ [{q['npc']}] - {q['desc']}")
-                st.info(q["dialogue"])
-                st.write(f"🎁 **현재 예상 보상:** `{dynamic_reward}` ({get_item_stat_text(dynamic_reward, '')})")
-                
-                status = q_state["status"]
-                prog = q_state["progress"]
-                target = q["target"]
+            q = st.session_state.current_quest
+            q_status = st.session_state.get("quest_status", "not_started")
 
-                if status == "available":
-                    st.write(f"상태: 퀘스트 수락 가능 (진행도: 0 / {target})")
-                    if st.button(f"퀘스트 수락하기 ({q['npc']})", key=f"accept_{q_id}"):
-                        st.session_state.quests[q_id]["status"] = "in_progress"
-                        st.session_state.quests[q_id]["progress"] = 0
-                        add_log(f"📜 [{q['npc']}]의 퀘스트를 수락했습니다. (목표: 몬스터 {target}마리 처치)")
-                        save_game_state()
-                        st.rerun()
-                elif status == "in_progress":
-                    st.write(f"상태: 퀘스트 진행 중... (진행도: {prog} / {target})")
-                    st.progress(min(1.0, prog / target))
-                elif status == "ready_to_complete":
-                    st.write(f"상태: **완료 가능!** (보상: {dynamic_reward})")
-                    if st.button(f"🎁 보상 받기 ({dynamic_reward})", key=f"reward_{q_id}", type="primary"):
-                        st.session_state.quests[q_id]["status"] = "completed"
-                        st.session_state.item_inventory.append(dynamic_reward)
-                        process_auto_equip()
-                        add_log(f"🎉 퀘스트 완료! [{q['npc']}]로부터 **{dynamic_reward}**(을)를 획득했습니다!")
-                        save_game_state()
-                        st.rerun()
-                elif status == "completed":
-                    st.success(f"✅ 이미 완료한 퀘스트입니다. (획득 보상: {dynamic_reward})")
+            st.markdown(f"### 📜 [{q['title']}]")
+            st.info(q['description'])
+            st.write(f"🎯 **주사위 성공 기준치 (Threshold):** `{q['threshold']}` 이상")
+
+            st.markdown("#### 🗣️ 주민들의 증언")
+            for npc_name, dialogue in q['npcs'].items():
+                st.markdown(f"- **{npc_name}**: {dialogue}")
+
+            st.markdown("---")
+
+            if q_status == "not_started":
+                if st.button("퀘스트 수락하기", type="primary"):
+                    st.session_state.quest_status = "in_progress"
+                    add_log(f"📜 퀘스트 [{q['title']}]을(를) 수락했습니다.")
+                    save_game_state()
+                    st.rerun()
+            elif q_status == "in_progress":
+                st.write("상태: **추리 및 조사 진행 중**")
+                npc_names = list(q['npcs'].keys())
+                selected_culprit = st.selectbox("범인으로 지목할 인물을 선택하세요", npc_names)
                 
-                st.markdown("---")
+                if st.button("범인 검거 및 조사 판정 시도", type="primary"):
+                    roll = random.randint(1, 20)
+                    stat_bonus = (st.session_state.stats['int'] + st.session_state.stats['dex']) // 4
+                    total_score = roll + stat_bonus
+                    
+                    st.write(f"🎲 주사위 결과: {roll} (스탯 보정: +{stat_bonus}) = 총합 **{total_score}** (기준치: {q['threshold']})")
+                    
+                    if total_score >= q['threshold']:
+                        if selected_culprit == q['culprit']:
+                            st.session_state.quest_status = "completed"
+                            reward_gold = 200
+                            reward_exp = 150
+                            st.session_state.gold += reward_gold
+                            add_exp(reward_exp)
+                            add_log(f"🎉 퀘스트 성공! 범인 [{q['culprit']}]을(를) 정확히 찾아냈습니다! (+{reward_gold} 골드, +{reward_exp} EXP)")
+                            save_game_state()
+                            st.rerun()
+                        else:
+                            st.warning(f"❌ 틀렸습니다! [{selected_culprit}]은(는) 범인이 아닙니다. 다시 시도하세요.")
+                    else:
+                        st.warning(f"❌ 판정 실패! 조사가 부족하여 진실을 밝혀내지 못했습니다. (총합 {total_score} < 기준치 {q['threshold']})")
+            elif q_status == "completed":
+                st.success(f"✅ 완료된 퀘스트입니다! (정답 범인: {q['culprit']})")
+                if st.button("새로운 퀘스트 받기"):
+                    all_q = load_quests()
+                    st.session_state.current_quest = random.choice(all_q)
+                    st.session_state.quest_status = "not_started"
+                    save_game_state()
+                    st.rerun()
 
     st.markdown("---")
     st.subheader("📜 실시간 모험 기록")
