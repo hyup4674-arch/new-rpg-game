@@ -241,7 +241,7 @@ def add_exp(exp_amount):
         st.session_state.exp -= st.session_state.max_exp
         st.session_state.level += 1
         st.session_state.max_exp = int(st.session_state.max_exp * 1.5)
-        st.session_state.stat_points += 4 # 힘, 지능, 민첩, 체력 스탯 포인트 각 1포인트씩 총 4포인트 부여
+        st.session_state.stat_points += 4 
         leveled_up = True
         add_log(f"🎉 플레이어가 레벨 업 했습니다! (현재 레벨: {st.session_state.level}) 스탯 포인트 4개가 지급되었습니다.")
         
@@ -333,7 +333,6 @@ def can_equip(char_class, item_name, stats=None):
     cat = get_item_category(item_name)
     if not cat: return False, None, "존재하지 않는 아이템입니다."
     
-    # 힐러는 장비 착용 불가
     if char_class == "힐러":
         return False, None, "[힐러] 직업은 장비를 착용할 수 없습니다."
         
@@ -916,7 +915,6 @@ else:
         magic_mult = SETTINGS.get("magic_damage_multiplier", 0.5)
         mp_cost = SETTINGS.get("default_mp_cost", 5)
 
-        # 턴 순서 처리: player -> companion_0 -> companion_1 -> monster
         turn = st.session_state.combat_turn
         
         if turn == "player":
@@ -990,18 +988,15 @@ else:
                 comp = st.session_state.companions[c_idx]
                 c_stats = comp['stats']
                 
-                # 힐러 로직 처리 (80% 미만 조건 및 플레이어 대상 점검 포함)[cite: 2]
                 if comp['type'] == "힐러":
                     all_members = [{"name": st.session_state.char_name, "hp": st.session_state.hp, "max_hp": max_hp, "type": "player", "obj": None}]
                     for oth_idx, oth_c in enumerate(st.session_state.companions):
                         _, _, o_max_hp, _ = get_companion_derived_stats(oth_c)
                         all_members.append({"name": oth_c['name'], "hp": oth_c['hp'], "max_hp": o_max_hp, "type": "companion", "obj": oth_c})
                     
-                    # 체력이 80% 미만인 부원들만 필터링 (누구든 80%보다 낮아지면)[cite: 2]
                     needs_healing = [m for m in all_members if (m['hp'] / m['max_hp']) < 0.8]
                     
                     if needs_healing:
-                        # 80% 미만인 대상 중 체력 비율이 가장 낮은 대상을 선택하여 힐 시전[cite: 2]
                         lowest_member = min(needs_healing, key=lambda x: x['hp'] / x['max_hp'])
                         
                         if comp['mp'] >= 5:
@@ -1017,7 +1012,6 @@ else:
                         else:
                             log_text = "동료 [힐러]의 마나가 부족하여 힐을 시전하지 못했습니다."
                     else:
-                        # 모두 80% 이상인 경우 힐을 사용하지 않음[cite: 2]
                         log_text = "동료 [힐러]가 아군 전원의 체력이 80% 이상이므로 힐을 사용하지 않았습니다."
                         
                     st.session_state.last_combat_msg = f"<span style='color: #27ae60;'>{log_text}</span>"
@@ -1031,7 +1025,6 @@ else:
                     time.sleep(combat_delay)
                     st.rerun()
                 else:
-                    # 일반 동료 공격 로직
                     c_weapon_atk = 0
                     is_c_magic = False
                     c_spell_name = None
@@ -1097,13 +1090,34 @@ else:
                 
         elif turn == "monster":
             monster_atk = cm['atk']
-            # 공격 대상 선정: 플레이어 또는 생존한 전투 가능한 동료 중 무작위 혹은 전사 우선
-            valid_targets = [{"type": "player", "name": st.session_state.char_name}]
+            
+            # --- [전사 우선 타겟팅 로직 추가부] ---
+            valid_targets = []
+            if st.session_state.hp > 0:
+                valid_targets.append({
+                    "type": "player", 
+                    "name": st.session_state.char_name, 
+                    "class": st.session_state.char_class
+                })
             for comp in st.session_state.companions:
                 if comp['hp'] > 0 and comp['type'] != "힐러":
-                    valid_targets.append({"type": "companion", "obj": comp, "name": comp['name']})
+                    valid_targets.append({
+                        "type": "companion", 
+                        "obj": comp, 
+                        "name": comp['name'], 
+                        "class": comp['type']
+                    })
             
-            chosen_target = random.choice(valid_targets)
+            # 전사 클래스가 존재하는지 필터링
+            warrior_targets = [t for t in valid_targets if t.get("class") == "전사"]
+            
+            if warrior_targets:
+                # 전사가 있다면 전사들 중 무작위로 우선 공격
+                chosen_target = random.choice(warrior_targets)
+            else:
+                # 전사가 없거나 죽었으면 생존한 전체 대상 중 랜덤 공격
+                chosen_target = random.choice(valid_targets)
+            # ---------------------------------------------
             
             if chosen_target["type"] == "companion":
                 comp = chosen_target["obj"]
