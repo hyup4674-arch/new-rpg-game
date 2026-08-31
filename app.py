@@ -799,7 +799,7 @@ else:
                                 if is_ok:
                                     curr = None
                                     if slot == "weapon": curr = comp["equipped_weapon"]
-                                    elif slot == "armor": comp["equipped_armor"]
+                                    elif slot == "armor": curr = comp["equipped_armor"]
                                     elif slot == "shield": comp["equipped_shield"]
                                     
                                     if slot == "weapon": comp["equipped_weapon"] = itm
@@ -990,28 +990,35 @@ else:
                 comp = st.session_state.companions[c_idx]
                 c_stats = comp['stats']
                 
-                # 힐러 로직 처리
+                # 힐러 로직 처리 (80% 미만 조건 및 플레이어 대상 점검 포함)[cite: 2]
                 if comp['type'] == "힐러":
-                    # 내 캐릭터 및 모든 동료 중 체력이 가장 낮은 사람 찾기
                     all_members = [{"name": st.session_state.char_name, "hp": st.session_state.hp, "max_hp": max_hp, "type": "player", "obj": None}]
                     for oth_idx, oth_c in enumerate(st.session_state.companions):
                         _, _, o_max_hp, _ = get_companion_derived_stats(oth_c)
                         all_members.append({"name": oth_c['name'], "hp": oth_c['hp'], "max_hp": o_max_hp, "type": "companion", "obj": oth_c})
                     
-                    lowest_member = min(all_members, key=lambda x: x['hp'])
+                    # 체력이 80% 미만인 부원들만 필터링 (누구든 80%보다 낮아지면)[cite: 2]
+                    needs_healing = [m for m in all_members if (m['hp'] / m['max_hp']) < 0.8]
                     
-                    if comp['mp'] >= 5:
-                        comp['mp'] -= 5
-                        heal_amt = c_stats["int"] + comp['level']
-                        if lowest_member['type'] == "player":
-                            st.session_state.hp = min(max_hp, st.session_state.hp + heal_amt)
+                    if needs_healing:
+                        # 80% 미만인 대상 중 체력 비율이 가장 낮은 대상을 선택하여 힐 시전[cite: 2]
+                        lowest_member = min(needs_healing, key=lambda x: x['hp'] / x['max_hp'])
+                        
+                        if comp['mp'] >= 5:
+                            comp['mp'] -= 5
+                            heal_amt = c_stats["int"] + comp['level']
+                            if lowest_member['type'] == "player":
+                                st.session_state.hp = min(max_hp, st.session_state.hp + heal_amt)
+                            else:
+                                _, _, lo_max_hp, _ = get_companion_derived_stats(lowest_member['obj'])
+                                lowest_member['obj']['hp'] = min(lo_max_hp, lowest_member['obj']['hp'] + heal_amt)
+                                
+                            log_text = f"동료 [힐러]가 힐 스킬을 시전하여 {lowest_member['name']}의 체력을 {heal_amt} 회복시켰습니다!"
                         else:
-                            _, _, lo_max_hp, _ = get_companion_derived_stats(lowest_member['obj'])
-                            lowest_member['obj']['hp'] = min(lo_max_hp, lowest_member['obj']['hp'] + heal_amt)
-                            
-                        log_text = f"동료 [힐러]가 힐 스킬을 시전하여 {lowest_member['name']}의 체력을 {heal_amt} 회복시켰습니다!"
+                            log_text = "동료 [힐러]의 마나가 부족하여 힐을 시전하지 못했습니다."
                     else:
-                        log_text = "동료 [힐러]의 마나가 부족하여 힐을 시전하지 못했습니다."
+                        # 모두 80% 이상인 경우 힐을 사용하지 않음[cite: 2]
+                        log_text = "동료 [힐러]가 아군 전원의 체력이 80% 이상이므로 힐을 사용하지 않았습니다."
                         
                     st.session_state.last_combat_msg = f"<span style='color: #27ae60;'>{log_text}</span>"
                     add_log(log_text)
